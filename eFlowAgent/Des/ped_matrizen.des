@@ -1,0 +1,22 @@
+/*!
+  \fn PED_Gamma_Bound(REAL *K, REAL *v,char *type)
+  \brief boundary integral at parts of boundary
+
+  possible values for type:
+
+  <table>
+  <tr><td>type</td><td></td></tr>
+  <tr><td>"A"</td><td>exit</td><td>\f$\Gamma=\Gamma_A\f$</td></tr>
+  <tr><td>"E"</td><td>entree</td><td>\f$\Gamma=\Gamma_E\f$</td></tr>
+  <tr><td>"B"</td><td>total boundary</td><td>\f$\Gamma=\partial \Omega\f$</td></tr>
+  <tr><td>"D"</td><td>dirichletboundary</td><td>\f$\Gamma=\Gamma_D\f$</td></tr>
+  <tr><td>"N"</td><td>neumannboundary</td><td>\f$\Gamma=\Gamma_N\f$</td></tr>
+  </table>
+
+  \f[
+  K_{ij} = \int\limits_{\Gamma}v\,\varphi_i\,\varphi_j~dx\,,
+  \f]
+
+  where \f$v=u\cdot\nu\f$ descrines the outer normal flow at \f$\Gamma\f$.
+
+*/

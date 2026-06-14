@@ -1,0 +1,92 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS specific
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Project specific large data files
+*.tfrecord
+SurrogateModel/data/
+generate/data/
+data/
+SurrogateModel/convlstm_unet_rho_v_geo_1_2_Decoder_40/
+SurrogateModel/convlstm_unet_rho_v_geo_1_2_Decoder_64/
+eFlowAgent/Octave/*
+!eFlowAgent/Octave/.gitkeep
+eFlowAgent_worker_*
+*.dat
+*.wasm
+*.o
+*.log
+
+
+
+# VideoCreator output files
+eFlowAgent/VideoCreator/*.png
+eFlowAgent/VideoCreator/*.jpg
+eFlowAgent/VideoCreator/*.eps
+eFlowAgent/VideoCreator/*.svg
+eFlowAgent/VideoCreator/*.avi
+eFlowAgent/VideoCreator/*.asv
+
+# Compiled binaries and executables
+eFlowAgent/pFlowSIM
+eFlowAgent/pFlowBench
+eFlowAgent/pFlowTEST
+eFlowAgent/*.o
+eFlowAgent/*.wasm
+eFlowAgent/*.js
+eFlowAgent/*.data
+
+# Tensorflow checkpoints and logs
+checkpoint/
+logs/
+*.ckpt
+*.pb
+*.keras
+
+# SurrogateModel training runs
+SurrogateModel/model_runs/

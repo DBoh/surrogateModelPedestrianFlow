@@ -1,0 +1,9 @@
+/*!
+  \fn plot_arrow(PIC_real *bild,float length, float width, int a1,int a2, int b1,int b2, float col[3], int flag)
+  \brief plots an arrow from point a to point b in bild
+
+  <table width="1000" align="center" cellborder="0">
+  <tr>
+  <td align="center"><img width="600" src="/home/axtr/Projekte/Pedestrian/macrowalk/doc/pFlow_2d/pics/Arrow_Flag.png"></td>
+  </table>
+*/

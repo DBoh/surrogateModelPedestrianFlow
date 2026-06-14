@@ -1,0 +1,956 @@
+{
+  "name": "default.json",
+  "Scenario": {
+    "charLength": 17,
+    "charDensity": 6,
+    "charVelocity": 1.34,
+    "startPersons": 80,
+    "randPersons": 1,
+    "maxTime": 100
+  },
+  "Fundamentaldiagramm": 5,
+  "Infection": {
+    "percentInfected": 0.01,
+    "criticalDistance": 0.5,
+    "infectionRate": 0.65,
+    "percentRemoved": 0.2,
+    "resistanceTime": 1,
+    "moveMode": 0
+  },
+  "Measurementstations": [],
+  "Entrance": [],
+  "Exit": [
+    {
+      "wallId": "aLWqNlSgt1VuQ2RNvTI57f5Z5ATuHw9HGnDJkE32Q4",
+      "xr": 464,
+      "yr": 974,
+      "xl": 372,
+      "yl": 974,
+      "weight": 1
+    },
+    {
+      "wallId": "9n_RVue9TIN3xSgEQvGAL8R-FH-_0ggBCTLA-PvhLK",
+      "xr": 889.000983440137,
+      "yr": 973.6095742655923,
+      "xl": 792.9940359114269,
+      "yl": 973.3677431635049,
+      "weight": 1
+    }
+  ],
+  "Attractors": [],
+  "SubdomainsFD": [
+    {
+      "Name": "subdom1",
+      "Velocity": 0.8,
+      "Polygon": [
+        265,
+        877,
+        563,
+        877,
+        563,
+        810,
+        265,
+        810
+      ]
+    },
+    {
+      "Name": "subdom1",
+      "Velocity": 0.8,
+      "Polygon": [
+        268,
+        744,
+        562,
+        744,
+        562,
+        678,
+        268,
+        678
+      ]
+    },
+    {
+      "Name": "subdom1",
+      "Velocity": 0.8,
+      "Polygon": [
+        271,
+        620,
+        562,
+        620,
+        562,
+        555,
+        271,
+        555
+      ]
+    },
+    {
+      "Name": "subdom1",
+      "Velocity": 0.8,
+      "Polygon": [
+        270,
+        494,
+        560,
+        494,
+        560,
+        429,
+        270,
+        429
+      ]
+    },
+    {
+      "Name": "subdom1",
+      "Velocity": 0.8,
+      "Polygon": [
+        704,
+        877,
+        996,
+        877,
+        996,
+        289,
+        704,
+        289
+      ]
+    },
+    {
+      "Name": "subdom1",
+      "Velocity": 0.8,
+      "Polygon": [
+        269,
+        366,
+        562,
+        366,
+        562,
+        282,
+        269,
+        282
+      ]
+    }
+  ],
+  "SubdomainsRhoInit": [
+    [
+      266,
+      845,
+      559,
+      845,
+      559,
+      809,
+      266,
+      809
+    ],
+    [
+      269,
+      714,
+      562,
+      714,
+      562,
+      675,
+      269,
+      675
+    ],
+    [
+      269,
+      589,
+      561,
+      589,
+      561,
+      554,
+      269,
+      554
+    ],
+    [
+      270,
+      462,
+      562,
+      462,
+      562,
+      426,
+      270,
+      426
+    ],
+    [
+      270,
+      333,
+      560,
+      333,
+      560,
+      300,
+      270,
+      300
+    ],
+    [
+      707,
+      844,
+      993,
+      844,
+      993,
+      811,
+      707,
+      811
+    ],
+    [
+      707,
+      721,
+      992,
+      721,
+      992,
+      684,
+      707,
+      684
+    ],
+    [
+      703,
+      587,
+      996,
+      587,
+      996,
+      561,
+      703,
+      561
+    ],
+    [
+      704,
+      465,
+      995,
+      465,
+      995,
+      432,
+      704,
+      432
+    ],
+    [
+      705,
+      337,
+      995,
+      337,
+      995,
+      302,
+      705,
+      302
+    ]
+  ],
+  "Refinement": {
+    "decompositionLevel": "medium",
+    "localRefinement": 0,
+    "localMarkMethod": 0,
+    "globalRefinement": 0
+  },
+  "Domainpolygon": {
+    "numberPoints": 64,
+    "segmentPoints": [
+      1044,
+      974,
+      647,
+      973,
+      644,
+      351,
+      622,
+      350,
+      624,
+      974,
+      222,
+      974,
+      219,
+      286,
+      1046,
+      286,
+      268,
+      875,
+      268,
+      846,
+      558,
+      846,
+      558,
+      876,
+      269,
+      745,
+      270,
+      719,
+      560,
+      718,
+      559,
+      748,
+      270,
+      621,
+      269,
+      591,
+      562,
+      591,
+      561,
+      620,
+      270,
+      494,
+      271,
+      465,
+      561,
+      464,
+      559,
+      496,
+      272,
+      365,
+      272,
+      337,
+      559,
+      338,
+      558,
+      366,
+      704,
+      876,
+      705,
+      845,
+      991,
+      843,
+      992,
+      874,
+      706,
+      812,
+      706,
+      782,
+      995,
+      782,
+      991,
+      811,
+      706,
+      745,
+      707,
+      720,
+      995,
+      717,
+      993,
+      745,
+      707,
+      682,
+      707,
+      653,
+      991,
+      653,
+      991,
+      682,
+      704,
+      620,
+      704,
+      590,
+      996,
+      588,
+      995,
+      620,
+      704,
+      558,
+      701,
+      530,
+      996,
+      528,
+      998,
+      557,
+      706,
+      494,
+      705,
+      465,
+      995,
+      463,
+      995,
+      492,
+      707,
+      429,
+      707,
+      402,
+      995,
+      402,
+      994,
+      431,
+      704,
+      365,
+      704,
+      339,
+      995,
+      339,
+      993,
+      367
+    ],
+    "numberSegments": 64,
+    "pointOrder": [
+      0,
+      1,
+      1,
+      2,
+      2,
+      3,
+      3,
+      4,
+      4,
+      5,
+      5,
+      6,
+      6,
+      7,
+      7,
+      0,
+      8,
+      9,
+      9,
+      10,
+      10,
+      11,
+      11,
+      8,
+      12,
+      13,
+      13,
+      14,
+      14,
+      15,
+      15,
+      12,
+      16,
+      17,
+      17,
+      18,
+      18,
+      19,
+      19,
+      16,
+      20,
+      21,
+      21,
+      22,
+      22,
+      23,
+      23,
+      20,
+      24,
+      25,
+      25,
+      26,
+      26,
+      27,
+      27,
+      24,
+      28,
+      29,
+      29,
+      30,
+      30,
+      31,
+      31,
+      28,
+      32,
+      33,
+      33,
+      34,
+      34,
+      35,
+      35,
+      32,
+      36,
+      37,
+      37,
+      38,
+      38,
+      39,
+      39,
+      36,
+      40,
+      41,
+      41,
+      42,
+      42,
+      43,
+      43,
+      40,
+      44,
+      45,
+      45,
+      46,
+      46,
+      47,
+      47,
+      44,
+      48,
+      49,
+      49,
+      50,
+      50,
+      51,
+      51,
+      48,
+      52,
+      53,
+      53,
+      54,
+      54,
+      55,
+      55,
+      52,
+      56,
+      57,
+      57,
+      58,
+      58,
+      59,
+      59,
+      56,
+      60,
+      61,
+      61,
+      62,
+      62,
+      63,
+      63,
+      60
+    ],
+    "numberHoles": 14,
+    "holes": [
+      {
+        "x": 413.819209039548,
+        "y": 860.7514124293785
+      },
+      {
+        "x": 417.9519147888191,
+        "y": 732.5130525797316
+      },
+      {
+        "x": 414.6723163841808,
+        "y": 605.734579366922
+      },
+      {
+        "x": 417.62448332484007,
+        "y": 479.7466168393636
+      },
+      {
+        "x": 415.2531214293134,
+        "y": 351.49186662511687
+      },
+      {
+        "x": 848.010752688172,
+        "y": 859.5179273912555
+      },
+      {
+        "x": 848.685881912862,
+        "y": 796.7165751186187
+      },
+      {
+        "x": 852.9587080680102,
+        "y": 731.7294907984857
+      },
+      {
+        "x": 849,
+        "y": 667.5
+      },
+      {
+        "x": 851.3147410358566,
+        "y": 604.4860557768924
+      },
+      {
+        "x": 850.6055734190783,
+        "y": 543.2368703108253
+      },
+      {
+        "x": 850.2441096488616,
+        "y": 478.4916929673078
+      },
+      {
+        "x": 852.4643189863983,
+        "y": 415.9981367616918
+      },
+      {
+        "x": 850.7966202698676,
+        "y": 352.4912527135743
+      }
+    ]
+  },
+  "Grid": {},
+  "PolygonCorners": {
+    "corners": [
+      {
+        "id": "9n_RVue9TIN3xSgEQvGAL",
+        "x": 1044,
+        "y": 26
+      },
+      {
+        "id": "8R-FH-_0ggBCTLA-PvhLK",
+        "x": 647,
+        "y": 27
+      },
+      {
+        "id": "7LkNBHDt3W0py3eJ67n5p",
+        "x": 644,
+        "y": 649
+      },
+      {
+        "id": "mC-kNM9KqJRHrp8F4XAdB",
+        "x": 622,
+        "y": 650
+      },
+      {
+        "id": "aLWqNlSgt1VuQ2RNvTI57",
+        "x": 624,
+        "y": 26
+      },
+      {
+        "id": "f5Z5ATuHw9HGnDJkE32Q4",
+        "x": 222,
+        "y": 26
+      },
+      {
+        "id": "VWwBa_ScUEg4n6alB7T6i",
+        "x": 219,
+        "y": 714
+      },
+      {
+        "id": "kExTBpCQCXys7hIcuKMVF",
+        "x": 1046,
+        "y": 714
+      }
+    ],
+    "closed": true
+  },
+  "HoleCorners": [
+    {
+      "corners": [
+        {
+          "id": "4euFb4R1x8W4LuXt-HKmM",
+          "x": 268,
+          "y": 125
+        },
+        {
+          "id": "dbc7Hrn1B8elbNBNqP9og",
+          "x": 268,
+          "y": 154
+        },
+        {
+          "id": "Ja5hLmHk2Z7rY3aHYhyUe",
+          "x": 558,
+          "y": 154
+        },
+        {
+          "id": "AgwTsiyfsbuLotcUKiJtC",
+          "x": 558,
+          "y": 124
+        }
+      ],
+      "closed": true
+    },
+    {
+      "corners": [
+        {
+          "id": "tVPLUX9BbjB3pYaqcu1qL",
+          "x": 269,
+          "y": 255
+        },
+        {
+          "id": "dNtBih72hcdzUze_rZpFY",
+          "x": 270,
+          "y": 281
+        },
+        {
+          "id": "GvOXAFfsBEa8VmC5CWp0G",
+          "x": 560,
+          "y": 282
+        },
+        {
+          "id": "63YyUT1vRcoKu0nBV4bhP",
+          "x": 559,
+          "y": 252
+        }
+      ],
+      "closed": true
+    },
+    {
+      "corners": [
+        {
+          "id": "tm7pPdETKRfNsblyzSXqt",
+          "x": 270,
+          "y": 379
+        },
+        {
+          "id": "MJWAnsoQg7H93OgJGjhVs",
+          "x": 269,
+          "y": 409
+        },
+        {
+          "id": "7grTPnJHDg1KZcfbXdfpz",
+          "x": 562,
+          "y": 409
+        },
+        {
+          "id": "A4dBhthX5uKTV1WnHTlWG",
+          "x": 561,
+          "y": 380
+        }
+      ],
+      "closed": true
+    },
+    {
+      "corners": [
+        {
+          "id": "CabbF-7X5NQVGN5MIFLLS",
+          "x": 270,
+          "y": 506
+        },
+        {
+          "id": "9D5bN00gYkMoooHjAl65q",
+          "x": 271,
+          "y": 535
+        },
+        {
+          "id": "jz8hY8edOA7hJIT4doTbn",
+          "x": 561,
+          "y": 536
+        },
+        {
+          "id": "ruC1CfC5iYjXKBApfPT0A",
+          "x": 559,
+          "y": 504
+        }
+      ],
+      "closed": true
+    },
+    {
+      "corners": [
+        {
+          "id": "ZqIPIXlopT4zJi5Sobez3",
+          "x": 272,
+          "y": 635
+        },
+        {
+          "id": "soPYpPcAjBJk3OHRT6_kM",
+          "x": 272,
+          "y": 663
+        },
+        {
+          "id": "JZuxiBQlkobOZ_HjLsFay",
+          "x": 559,
+          "y": 662
+        },
+        {
+          "id": "RfrZLyCW2cWqzqPplM-nh",
+          "x": 558,
+          "y": 634
+        }
+      ],
+      "closed": true
+    },
+    {
+      "corners": [
+        {
+          "id": "eh3Ybxzpzo7LZ78YBimVV",
+          "x": 704,
+          "y": 124
+        },
+        {
+          "id": "3kpQytqcBqbU8_nZ-L5C4",
+          "x": 705,
+          "y": 155
+        },
+        {
+          "id": "fvur1Ss4DmYvbrP1A2mRI",
+          "x": 991,
+          "y": 157
+        },
+        {
+          "id": "vRm0yye3kh0EgCwR1wGmx",
+          "x": 992,
+          "y": 126
+        }
+      ],
+      "closed": true
+    },
+    {
+      "corners": [
+        {
+          "id": "YYRbfa2bB2f5OvEcR5xVJ",
+          "x": 706,
+          "y": 188
+        },
+        {
+          "id": "4axrGcdZySLiSG9rTyBWY",
+          "x": 706,
+          "y": 218
+        },
+        {
+          "id": "4xtP5MjMSt9eiGTNS3t0p",
+          "x": 995,
+          "y": 218
+        },
+        {
+          "id": "hXdHnlAe-PHaW8H6wAjKr",
+          "x": 991,
+          "y": 189
+        }
+      ],
+      "closed": true
+    },
+    {
+      "corners": [
+        {
+          "id": "KwGNiTnY2pHYil9TjNnpL",
+          "x": 706,
+          "y": 255
+        },
+        {
+          "id": "_md8f-Wz-6Cd_TuDuSXAb",
+          "x": 707,
+          "y": 280
+        },
+        {
+          "id": "D5LKjPOzcs3Y_nVteFseX",
+          "x": 995,
+          "y": 283
+        },
+        {
+          "id": "-7t0qOBnlawfFKInaCTMZ",
+          "x": 993,
+          "y": 255
+        }
+      ],
+      "closed": true
+    },
+    {
+      "corners": [
+        {
+          "id": "iIZw0eHpqpa6s7vYYFgyO",
+          "x": 707,
+          "y": 318
+        },
+        {
+          "id": "AkuXTgUHyu_7ARHTLym2X",
+          "x": 707,
+          "y": 347
+        },
+        {
+          "id": "LMC1Zj55v3S0OeARskIko",
+          "x": 991,
+          "y": 347
+        },
+        {
+          "id": "sXTgBJmo0eHPnWq0Q-erl",
+          "x": 991,
+          "y": 318
+        }
+      ],
+      "closed": true
+    },
+    {
+      "corners": [
+        {
+          "id": "WjtwnHU0CJVNByOseCSvA",
+          "x": 704,
+          "y": 380
+        },
+        {
+          "id": "wrBCvfQfQ90q8NLuV8TYF",
+          "x": 704,
+          "y": 410
+        },
+        {
+          "id": "r5SLDxWHvZQAG3PJ6j34H",
+          "x": 996,
+          "y": 412
+        },
+        {
+          "id": "62HfK9kCGQk6JJaeBJEtA",
+          "x": 995,
+          "y": 380
+        }
+      ],
+      "closed": true
+    },
+    {
+      "corners": [
+        {
+          "id": "3J8018vzjAp7CItc7PA4R",
+          "x": 704,
+          "y": 442
+        },
+        {
+          "id": "wEoOOdsGDCNemfQ22rPio",
+          "x": 701,
+          "y": 470
+        },
+        {
+          "id": "b8ndl8jgxdljLeAT10bWo",
+          "x": 996,
+          "y": 472
+        },
+        {
+          "id": "2XbSZnq5FzTEWfMPEVorJ",
+          "x": 998,
+          "y": 443
+        }
+      ],
+      "closed": true
+    },
+    {
+      "corners": [
+        {
+          "id": "Ir1Z_0zrFFPCH_1LNMqyu",
+          "x": 706,
+          "y": 506
+        },
+        {
+          "id": "GSRc6jlyJMxvTFlfZYEjG",
+          "x": 705,
+          "y": 535
+        },
+        {
+          "id": "kH2GM7yNeF6rMXnDDamJt",
+          "x": 995,
+          "y": 537
+        },
+        {
+          "id": "zVCVdYGIT_FXQefE31ukk",
+          "x": 995,
+          "y": 508
+        }
+      ],
+      "closed": true
+    },
+    {
+      "corners": [
+        {
+          "id": "IBfGykZjUVlog99uY5Fvj",
+          "x": 707,
+          "y": 571
+        },
+        {
+          "id": "oRGUclmQ02DlLa05GX76I",
+          "x": 707,
+          "y": 598
+        },
+        {
+          "id": "RfCuJU1vU1ntbZR2_dyPt",
+          "x": 995,
+          "y": 598
+        },
+        {
+          "id": "jqPOcrQwYMVSPsNHuPJf9",
+          "x": 994,
+          "y": 569
+        }
+      ],
+      "closed": true
+    },
+    {
+      "corners": [
+        {
+          "id": "xiav92dAS70jbq1__BnZ7",
+          "x": 704,
+          "y": 635
+        },
+        {
+          "id": "iTy4_y_y9_OGreNBOML1v",
+          "x": 704,
+          "y": 661
+        },
+        {
+          "id": "ZdRJxRuIQkbh3lJN182wt",
+          "x": 995,
+          "y": 661
+        },
+        {
+          "id": "cf88fsrkE2C8Vs441c106",
+          "x": 993,
+          "y": 633
+        }
+      ],
+      "closed": true
+    }
+  ]
+}

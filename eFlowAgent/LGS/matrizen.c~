@@ -1,0 +1,184 @@
+/*!
+  \file matrizen.c
+  \brief matrices of the system
+*/
+#include <ped.h>
+
+extern Basis phi;
+extern GE *tri;
+extern int NT, NK, *nach, bandwidth;
+extern REAL *XY;
+extern GN *node;
+extern MATRIX MAT;
+extern DAT PED;
+extern NEUTRALS ZO;
+
+void SysMatrixV(REAL *Mat, REAL *v, void (*FuncElem)(REAL [6][6], int , REAL *))
+{
+  int i, mi, j, k, ig, jg, l;
+  REAL LocInt[6][6];
+
+  // diagnal_i, node[i].NEIGH_NODE[0] Eintraege,
+  // diagonal_(i+1), node[i+1].NEIGH_NODE[0] Eintrage, ..
+
+  for(k=0 ; k<NK*bandwidth ; k++)
+    Mat[k]=0.;
+
+
+  for(k=0 ; k<NT ; k++){
+    FuncElem(LocInt,k,v);
+
+    for(i=0 ; i<3 ; i++){
+      ig = tri[k].VNR[i];
+      mi = node[ig].pointmat;
+      for(j=0 ; j<3 ; j++){
+	jg = tri[k].VNR[j];
+
+	if(i==j)
+	  Mat[mi] += LocInt[i][i];
+	else {
+	  for(l=mi+1 ; l<node[ig+1].pointmat ; l++)
+	    if(jg==nach[l])
+	      Mat[l] += LocInt[i][j];
+	}
+      }
+    }
+  }
+}
+
+
+void SysMatrix(REAL *Mat, void (*FuncElem)(REAL [6][6], int ))
+{
+  int i, mi, j, k, ig, jg, l;
+  REAL LocInt[6][6];
+
+  // diagnal_i, node[i].NEIGH_NODE[0] Eintraege,
+  // diagonal_(i+1), node[i+1].NEIGH_NODE[0] Eintrage, ..
+
+  for(k=0 ; k<NK*bandwidth ; k++)
+    Mat[k]=0.;
+
+
+  for(k=0 ; k<NT ; k++){
+    FuncElem(LocInt,k);
+
+    for(i=0 ; i<3 ; i++){
+      ig = tri[k].VNR[i];
+      mi = node[ig].pointmat;
+      for(j=0 ; j<3 ; j++){
+	jg = tri[k].VNR[j];
+
+	if(i==j)
+	  Mat[mi] += LocInt[i][i];
+	else {
+	  for(l=mi+1 ; l<node[ig+1].pointmat ; l++)
+	    if(jg==nach[l])
+	      Mat[l] += LocInt[i][j];
+	}
+      }
+    }
+  }
+}
+
+
+void SysMatrixK(REAL *Mat, REAL *v[2], void (*FuncElem)(REAL [6][6], int , REAL *[2]))
+{
+  int i, mi, j, k, ig, jg, l;
+  REAL LocInt[6][6];
+
+  // diagnal_i, node[i].NEIGH_NODE[0] Eintraege,
+  // diagonal_(i+1), node[i+1].NEIGH_NODE[0] Eintrage, ..
+
+  for(k=0 ; k<NK*bandwidth ; k++)
+    Mat[k]=0.;
+
+
+  for(k=0 ; k<NT ; k++){
+    FuncElem(LocInt,k,v);
+
+    for(i=0 ; i<phi.DOFloc ; i++){
+      ig = tri[k].VNR[i];
+      mi = node[ig].pointmat;
+      for(j=0 ; j<phi.DOFloc ; j++){
+	jg = tri[k].VNR[j];
+
+	if(i==j){
+	  Mat[mi] += LocInt[i][i];
+	} else {
+	  for(l=mi+1 ; l<node[ig+1].pointmat ; l++)
+	    if(jg==nach[l])
+	      Mat[l] += LocInt[i][j];
+	}
+      }
+    }
+  }
+
+}
+
+
+/*!
+  \brief \f[A=
+  c_1\,M+
+  c_2\,S+
+  c_3\,K({\vec v}_3)+
+  c_4\,K_Gamma({\vec v_4})+
+  c_5\,K_Gamma({\vec v_5})+
+  \f]
+*/
+void ContEqMatrix(REAL *A, REAL c1, REAL c2, REAL c3, REAL *v3[2], REAL c4, REAL c5, REAL *v5)
+{
+  int i, k;
+  REAL *K, *MA;
+
+  K    = (REAL *)calloc( NK*bandwidth , sizeof(REAL ));
+  MA   = (REAL *)calloc( NK*bandwidth , sizeof(REAL ));
+  
+  SysMatrixK(K,v3,konv_elem_v);
+  BoundIntegral(MA,v5,PED.numexit,PED.exit);
+
+  // c1 = 1.
+  // c2 = PED.delta*PED.EPS0 
+  // c3 = PED.delta*PED.CV*PED.CT/PED.CV
+  // v3 = vel
+  // c4 = -c2
+  // c5 = -c3
+  // v5 = u*nu
+
+#if EOC
+  c1 = 0; // rho_t = 0
+#endif
+  
+  for(i=0 ; i<NK*bandwidth ; i++)
+    A[i] = c1*MAT.Mass[i]+c2*MAT.Stiff[i]+c3*K[i]+c4*MAT.KonvExit[i]+c5*MA[i];
+
+  free(MA);
+  free(K);
+
+}
+
+
+/*!
+  \brief \f[A=c_1\,M(v_1)+c_2\,S\f]
+*/
+void HelmEqMatrix(REAL *A, REAL c1, REAL *v1, REAL c2)
+{
+  REAL *M;
+  
+  M    = (REAL *)calloc( NK*bandwidth , sizeof(REAL ));
+
+  SysMatrixV(M,v1,mass_elem_v);
+  field_cp(A,c1,M,c2*c2,MAT.Stiff,0.,NK*bandwidth);
+
+  if(PED.numentree){
+    REAL *ME;
+    ME   = (REAL *)calloc( NK*bandwidth , sizeof(REAL ));
+
+    BoundIntegral(ME,ZO.NKones,PED.numentree,PED.entree);
+    field_cp(A,1.,A,c2,ME,0.,NK*bandwidth); // freie Einstellung am Eingang
+    
+    free(ME);
+  }
+  
+  free(M);
+}
+

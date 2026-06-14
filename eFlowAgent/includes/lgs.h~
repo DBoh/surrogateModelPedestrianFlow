@@ -1,0 +1,76 @@
+void ContRHS(REAL , REAL *, REAL *); // rhs.c
+
+
+void SysMatrix(REAL *, void (*)(REAL [6][6], int ));                  // matrizen.c
+void SysMatrixV(REAL *, REAL *, void (*)(REAL [6][6], int , REAL *)); // matrizen.c
+void SysMatrixK(REAL *, REAL *[2], void (*)(REAL [6][6], int , REAL *[2])); // matrizen.c
+//void ContEqMatrix(REAL *A, REAL c1, REAL c2, REAL c3, REAL *v3[2], REAL *v4); // matrizen.c
+void ContEqMatrix(REAL *A, REAL c1, REAL c2, REAL c3, REAL *v3[2], REAL c4, REAL c5, REAL *v5);
+void HelmEqMatrix(REAL *A, REAL c1, REAL *v1, REAL c2); // matrizen.c
+
+
+void BoundIntegral(REAL *, REAL *, int , REAL *[4]);    // bound_integrals.c
+void OneBoundIntegral(REAL *KB, REAL *v, REAL Door[4]);    // bound_integrals.c
+void BoundGradNuIntegral(REAL *KB, REAL *v,int NumDoors, REAL *Door[4]);    // bound_integrals.c
+
+
+void UpdateVelocity(int , REAL *[2],REAL *, REAL *, REAL *);           // velocity.c
+void UpdateVelocityPhi(int , REAL *[2],REAL *, REAL *, REAL *);           // velocity.c
+void u_entree_nu(REAL *, REAL *[2]); //velocity.c
+void u_nu(REAL *, REAL *[2]);
+
+REAL ContinuityEquation(int , REAL *, REAL *[2], REAL *, REAL *, void (*)(REAL , REAL *, int ), void (*)(REAL *, REAL *, REAL * ));  
+REAL HelmholtzEquation(int , REAL *, REAL *, void (*)(REAL , REAL *, int ), void (*)(REAL *, REAL *, REAL * )); 
+void FastSweeping(int , REAL *, REAL *, void (*)(REAL , REAL *, int ), void (*)(REAL *, REAL *, REAL *));
+void SolHelm2Eikonal(REAL *, REAL *);
+void MaxPhi();
+
+
+
+
+
+
+
+REAL lgs_solver(REAL , REAL *, REAL *, REAL *, int , void (*)(REAL , REAL *, int ), void (*)(REAL *, REAL *, REAL * ));// solver.c
+REAL cg(REAL , REAL *, REAL *, REAL *, void (*)(REAL , REAL *, int ));              // cg.c
+REAL PCG(REAL , REAL *, REAL *, REAL *, void (*)(REAL , REAL *, int ), void (*)(REAL *, REAL *, REAL * ), int, REAL );
+REAL PBICGSTAB(REAL , REAL *,REAL *,REAL *, void (*)(REAL , REAL *, int ), void (*)(REAL *, REAL *, REAL * ), int , REAL);
+REAL bicgstab(REAL , REAL *, REAL *, REAL *, void (*)(REAL , REAL *, int ));        // cg.c
+
+// sor.c
+void sor(REAL *, REAL *[2], REAL *[2], REAL );
+
+int gmres_(int *,REAL *,REAL *,int *,double *,int *,double *,int *,int *,double *,int (*)(double *, double *, double *, double *),int (*)(double *,double *),int *);
+
+void gmres_ZIB_test();
+void gmres_ZIB();
+
+void PrintSysMatrix(char *, REAL *);                                     // lgs_ofles.c
+void printmatrix(char *, REAL [6][6], int);                                     // lgs_ofles.c
+void printvector(char *, REAL *);
+void printXY(char *);
+
+
+void amul(REAL *, REAL *, REAL *);
+void amul_bd_exit(REAL *, REAL *, REAL *);
+void amul_bd_entree(REAL *, REAL *, REAL *);
+void amul_bd_entree_exit(REAL *, REAL *, REAL *);
+void amul_EOC(REAL *, REAL *, REAL *);
+
+
+REAL scalpr(REAL *, REAL *, int );                                    // vector_functions.c
+REAL CrossProd_2d(REAL *u, REAL *v);
+int VecCapVec(REAL [2], REAL [2], REAL [2], REAL [2], REAL [2], REAL [2]);
+int PointElementVec(REAL [2], REAL [2], REAL [2]);
+
+int Colinear(REAL a1[2], REAL a2[2], REAL b1[2], REAL b2[2]);
+int SameLine(REAL a1[2], REAL a2[2], REAL b1[2], REAL b2[2]);
+void HadamardMult(REAL *VW, REAL *V, REAL *W, REAL alpha, int N);
+void HadamardDiv(REAL *VW, REAL *V, REAL *W, REAL alpha, int N);
+
+
+
+void PlotBDphi(int , REAL *, REAL *, int );
+void QuasiEikonalGeom();
+void QuasiEikonalEquation(int, REAL *, REAL *);
+void QuasiEikonalSP(int, REAL *, REAL *);

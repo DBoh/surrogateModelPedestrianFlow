@@ -1,0 +1,375 @@
+/*!
+  \file ped_init.c
+  \brief initial values
+*/
+#include <ped.h>
+
+extern DAT PED;
+extern System lgs;
+extern REAL PI;
+extern REAL EpsZero;
+extern VIDEO video;
+extern MATRIX MAT;
+extern TRI refine;
+extern SUBDOM RhoIni;
+extern int NK, NT, bandwidth;
+extern GE *tri;
+extern REAL *XY;
+extern NEUTRALS ZO;
+extern SIRagent siragent;
+
+void RhoInitSubdomainsRand(REAL *, int *, REAL *[2]);
+void RhoInitNoSubdomainsRand(REAL *, int *, REAL *[2]);
+void RhoInitSubdomainsConst(REAL *, int *, REAL *[2]);
+void RhoInitNoSubdomainsConst(REAL *, int *, REAL *[2]);
+void VideoInit();
+
+void FuncInit(REAL *v, REAL *vel[2], REAL *rho, REAL *unu)
+{
+  int i;
+
+  RhoInit(rho);
+  
+#if EOC
+  int l;
+  REAL *Vex, *Rex, *Uex[2];
+
+  Vex = (REAL *)calloc(NK , sizeof(REAL ));
+  Rex = (REAL *)calloc(NK , sizeof(REAL ));
+  for(l=0 ; l<2 ; l++)
+    Uex[l] = (REAL *)calloc(NK , sizeof(REAL ));
+      
+  for(i=0 ; i<NK ; i++){
+    Vex[i] = V_Exact(0,XY[2*i],XY[2*i+1]);
+    Rex[i] = Rho_Exact(0,XY[2*i],XY[2*i+1]);
+    Uex[0][i] = U1_Exact(0,XY[2*i],XY[2*i+1]);
+    Uex[1][i] = U2_Exact(0,XY[2*i],XY[2*i+1]);
+  }
+  
+#if PLOT
+  octaveplot(Vex,"VEx",0.,-1.,0);
+  octaveplot(Rex,"RhoEx",0.,-1.,0);
+  octaveplotvec(Uex,"Uex",0);
+#endif
+
+  free(Rex);
+  free(Vex);
+  for(l=0 ; l<2 ; l++)
+    free(Uex[l]);
+#endif
+
+
+  PED.ARMask = (REAL *)calloc(NK , sizeof(REAL ));
+
+}
+
+void RhoInit(REAL *rho)
+{
+  int i, l, k;
+  int *PnumT;
+  REAL TM, *TXY[2], xt[2], Rhomax, tau, OM, SM;
+
+  VideoInit();
+
+  for(l=0 ; l<2 ; l++)
+    TXY[l] = (REAL *)calloc(video.TrackPersonMax , sizeof( REAL ));
+  PnumT    = (int *)calloc(NT , sizeof(int ));
+
+  FieldCp(rho,1.,RhoIni.Kvec,0.,NK);
+  
+  if(RhoIni.NumSubdom){
+    if(!PED.Prand)
+      RhoInitSubdomainsConst(rho,PnumT,TXY);
+    else 
+      RhoInitSubdomainsRand(rho,PnumT,TXY);
+  } else {
+    if(!PED.Prand)
+      RhoInitNoSubdomainsConst(rho,PnumT,TXY);
+    else 
+      RhoInitNoSubdomainsRand(rho,PnumT,TXY);
+  }
+
+  /* Skalierung auf */
+
+  if(PED.Prand)
+    {
+      Rhomax=0.;
+      for(k=0 ; k<NT ; k++){
+	for(l=0 ; l<3 ; l++){
+	  i = tri[k].VNR[l];
+	  rho[i] += PnumT[k]/3.;
+	  if(Rhomax<rho[i]) Rhomax = rho[i];
+	}
+      }
+    }
+  
+
+  Rhomax = FieldMax(rho,NK);
+  if(Rhomax>1) FieldCp(rho,1./Rhomax,rho,0.,NK);
+  TM = TotalMass(MAT.Mass,rho);
+  SM = TotalMass(MAT.Mass,RhoIni.Kvec); 
+
+  if(PED.Pinit*Rhomax/TM<1)
+    for(i=0 ; i<NK ; i++)
+      rho[i] *= PED.Pinit/TM;
+  else
+    {
+      tau = (PED.Pinit-TM)/(SM-TM);
+
+      for(i=0 ; i<NK ; i++)
+	if(RhoIni.Kvec[i]>0)
+	  rho[i] = (1-tau)*rho[i]+tau;
+    }
+
+
+#if TP
+  for(i=0 ; i<video.TrackPerson ; i++)
+    for(l=0 ; l<2 ; l++)
+      video.TrackXYPosition[l][i] = TXY[l][i];
+#endif
+
+#if SIRA
+  sir_agent_init();
+#endif
+
+#if PLOT    
+  WriteTrackPoints(rho,"TrackPoints_i_x_y_rho",0);
+#endif
+
+  free(PnumT);
+  for(l=0 ; l<2 ; l++)
+    free(TXY[l]);
+
+}
+
+//-----------------------------------------------------------------------------------------------
+void RhoInitSubdomainsRand(REAL *rho, int *PnumT, REAL *TXY[2])
+{
+  int i, l, Pcount, k, loop=0;
+  int SDNr, *SDNrSum, *SetDec;
+  REAL xt[2];
+
+  SetDec   = (int *)calloc(RhoIni.NumSubdom , sizeof(int ));
+  SDNrSum  = (int *)calloc(RhoIni.NumSubdom , sizeof(int ));
+  SetDecomposition(PED.Pinit,RhoIni.NumSubdom,SetDec); // hier noch Anteil je Flaeche
+
+  Pcount=0; loop=0; k=0;
+  while(Pcount<PED.Pinit){
+    k = min(max(0,round(NT*(REAL)(rand())/RAND_MAX)),NT-1);
+
+    if(RhoIni.Tvec[k]>0.8){ // also eigentlich 1...., wenn T ganz im Subdom enthalten ist
+
+      SDNr = RhoIni.KnotToSubdom[tri[k].VNR[0]]; // no of actual subdom
+      if(SDNrSum[SDNr]<SetDec[SDNr]){ // Dreieck noch nicht mit der Teilmenge gefuellt
+
+        TriRandXY(k,xt);
+        for(l=0 ; l<2 ; l++)
+          TXY[l][Pcount] = xt[l];
+        
+        Pcount++;        // alle gesetzten Tracks
+        SDNrSum[SDNr]++; // gesetzte Tracks je Subdom
+        PnumT[k]++;      // Zaehler fuer Tracks je Dreieck
+
+      }
+    }
+
+    if(loop++>=100000)
+      ErrorMessage("something wrong","RhoInitSubdomainsRand");
+
+  }
+  
+  free(SetDec);
+  free(SDNrSum);
+
+}
+
+//-----------------------------------------------------------------------------------------------
+void RhoInitNoSubdomainsRand(REAL *rho, int *PnumT, REAL *TXY[2])
+{
+  int i, l, Pcount, k, loop=0;
+  REAL TM, xt[2];
+
+  Pcount=0; loop=0; k=0;
+  while(Pcount<PED.Pinit){
+    k = min(max(0,round(NT*(REAL)(rand())/RAND_MAX)),NT-1);
+      
+    TriRandXY(k,xt);
+    for(l=0 ; l<2 ; l++)
+      TXY[l][Pcount] = xt[l];
+	
+    Pcount++;        // alle gesetzten Tracks
+    PnumT[k]++;      // Zaehler fuer Tracks je Dreieck
+
+    if(loop++>=100000)
+      ErrorMessage("something wrong","RhoInitNoSubdomainsRand");
+
+  }
+  
+}
+
+//-----------------------------------------------------------------------------------------------
+void RhoInitSubdomainsConst(REAL *rho, int *PnumT, REAL *TXY[2])
+{
+  int i, l, k, Pcount=0, loop=0;
+  REAL TM, xt[2];
+  
+  TM = TotalMass(MAT.Mass,rho);
+  for(i=0 ; i<NK ; i++)
+    rho[i] *= PED.Pinit/TM;
+
+  Pcount=0; loop=0; k=0;
+  while(Pcount<PED.Pinit){
+    k = min(max(0,round(NT*(REAL)(rand())/RAND_MAX)),NT-1);
+    
+    if(RhoIni.Tvec[k])
+      {
+      
+	TriRandXY(k,xt);
+	for(l=0 ; l<2 ; l++)
+	  TXY[l][Pcount] = xt[l];
+	
+	Pcount++;        // alle gesetzten Tracks
+	PnumT[k]++;      // Zaehler fuer Tracks je Dreieck
+      }
+
+    if(loop++>=100000)
+      ErrorMessage("something wrong","RhoInitSubdomainsConst");
+
+  }
+  
+}
+
+//-----------------------------------------------------------------------------------------------
+void RhoInitNoSubdomainsConst(REAL *rho, int *PnumT, REAL *TXY[2])
+{
+  int i, l, k, Pcount=0, loop=0;
+  REAL TM, xt[2];
+  
+  TM = TotalMass(MAT.Mass,rho);
+  for(i=0 ; i<NK ; i++)
+    rho[i] *= PED.Pinit/TM;
+
+  Pcount=0; loop=0; k=0;
+  while(Pcount<PED.Pinit){
+    k = min(max(0,round(NT*(REAL)(rand())/RAND_MAX)),NT-1);
+    TriRandXY(k,xt);
+    for(l=0 ; l<2 ; l++)
+      TXY[l][Pcount] = xt[l];
+    
+    Pcount++;        // alle gesetzten Tracks
+    PnumT[k]++;      // Zaehler fuer Tracks je Dreieck
+    
+
+    if(loop++>=100000)
+      ErrorMessage("something wrong","RhoInitNoSubdomainsConst");
+
+  }
+}
+
+//-----------------------------------------------------------------------------------------------
+
+
+void ParamInit(REAL *rho)
+{
+  int i, l;
+  REAL h=refine.gridwidth, hfd, fdv, GE, PFD;
+  REAL Door[4], fdmax=1, SumExit, EntreePerCent[2];
+  char msg[100];
+  FILE *fp;
+
+
+  EntreePerCent[0]=100; EntreePerCent[1]=100;
+  
+  if (PED.EPS1<0.)
+    PED.EPS1 = pow(h,11./16.);
+  if (PED.EPS0<0.)
+    PED.EPS0 = h*h;
+  if (PED.delta<0.)
+    PED.delta = h*h;
+
+  #if MSG
+  sprintf(msg,"%e",PED.EPS0);
+  Message("EPS0=",'=',msg);
+  #endif
+
+  PED.FDnk = ReadFDData(PED.FDname,1.0);
+  hfd = 1./(PED.FDnk-1);
+
+
+#if PLOT
+  fp=fopen("00Output/Fundamentaldiagram.dat","w");
+  for(i=0 ; i<PED.FDnk ; i++){
+    fdv = FD_Value(hfd*i,0,0.,0.,0);
+    fprintf(fp,"%f %f %f\n",hfd*i,fdv,hfd*i*fdv);
+    if(hfd*i*fdv>fdmax) fdmax=hfd*i*fdv;
+  }
+  fclose(fp);
+#endif
+  
+  for(i=0 ; i<PED.numentree ; i++){
+    for(l=0 ; l<4 ; l++)
+      Door[l] = PED.entree[l][i];
+
+    GE = sqrt(pow(Door[0]-Door[2],2.)+pow(Door[1]-Door[3],2.));
+    PFD = PED.pFlowDoor[i]; 
+    //    PED.RhoInflow[i] = CurrentDensity(Door,PFD,1);
+
+
+    if(fdmax<PED.pFlowDoor[i]){
+      sprintf(msg,"EntreePersons too large at Door %d: allowed: %f",
+        i,fdmax*PED.CP*PED.CV*PED.CL*PED.CT*GE);
+      ErrorMessage(msg,"ped_init");
+    }
+
+  }
+
+
+  if(PED.numexit==0) ErrorMessage("No exit chosen","ParamInit");
+
+  
+  for(i=0 ; i<PED.numexit ; i++){
+    SumExit=0.;
+    for(l=0 ; l<4 ; l++)
+      Door[l] = PED.exit[l][i];
+
+    SumExit += sqrt(pow(Door[0]-Door[2],2.)+pow(Door[1]-Door[3],2.));
+  }
+
+
+  if(SumExit<EpsZero) ErrorMessage("No exit chosen II","ParamInit");
+
+  
+  //  siragent.CD += PED.Shoulder;
+  siragent.CD /= PED.CL;
+
+
+}
+
+
+
+void VideoInit()
+{
+  int l;
+  
+  video.TrackPerson    = PED.Pinit;
+  video.TrackPersonMax = PED.Pinit;
+    
+  for(l=0 ; l<PED.numentree ; l++)
+    video.TrackPersonMax += (ceil)(PED.MaxEntreePersons[l]);
+  
+  for(l=0 ; l<2 ; l++)
+    video.TrackXYPosition[l] = (REAL *)calloc(video.TrackPersonMax , sizeof( REAL ));
+  video.TrackInside = (int *)calloc(video.TrackPersonMax , sizeof(int ));
+  video.Rhoh    = (REAL *)calloc(video.TrackPersonMax , sizeof(REAL ));
+    
+  for(l=0 ; l<PED.Pinit ; l++)
+    video.TrackInside[l] = 1;
+
+  video.pinloc  = (int *)calloc(PED.numentree , sizeof(int ));
+  video.carry   = (REAL *)calloc(PED.numentree , sizeof(REAL ));
+  video.pinsum  = (int *)calloc(PED.numentree , sizeof(int ));
+
+#if SIRA
+  video.SIRmode = (int *)calloc(video.TrackPersonMax , sizeof(int ));
+#endif
+}

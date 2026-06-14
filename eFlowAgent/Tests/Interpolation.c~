@@ -1,0 +1,23 @@
+/*!
+  \file matrixtest.c
+  \brief funcitons that checks matrizes
+*/
+
+#include "../includes/ped.h"
+
+extern DAT PED;
+extern REAL *XY;
+extern int NK, bandwidth;
+extern TRI refine;
+extern MATRIX MAT;
+extern REAL PI;
+
+
+
+void ClementInterpolationTest()
+{
+
+
+  printf("foo\n");
+
+}

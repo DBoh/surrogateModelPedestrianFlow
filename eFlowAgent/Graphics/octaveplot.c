@@ -1,0 +1,414 @@
+/*!
+  \file octaveplot.c
+  \brief dataIO for octave-plots
+*/
+
+#include <ped.h>
+
+extern TRI refine;
+extern int NK, NT;
+extern DAT PED;
+extern GE *tri;
+extern REAL *XY;
+extern SUBDOM SDCV, RhoIni, Att;
+
+
+REAL alphax=1./64., alphay=1./64.;
+
+int OctavePlotAll(REAL *v, REAL *vel[2], REAL *rho, int LOOP, int lc)
+{
+
+  if(!lc) octavegridplot();
+  
+  if(fps_check(LOOP,PED.delta,PED.plotfreq))
+    {
+
+      octaveplot(v,"V",0.,-1.,lc);
+      octaveplot(rho,"Rho",0.,-1.,lc);
+      octaveplotvec(vel,"Vel",lc);
+
+#if TP
+      WriteTrackPoints(rho,"TrackPoints_i_x_y_rho",lc);
+#endif
+
+      lc++;
+    }
+
+  return lc;
+}
+
+
+void octavesubdomplot()
+{
+  int k, l,i;
+  REAL col;
+  FILE *fpx, *fpy, *fpc;
+
+  if(SDCV.NumSubdom>0){
+    fpx = fopen("Octave/SubdomFDx.dat","w");
+    fpy = fopen("Octave/SubdomFDy.dat","w");
+    fpc = fopen("Octave/SubdomFDc.dat","w");
+    for(k=0 ; k<NT ; k++){
+      col=0;
+      for(l=0 ; l<3 ; l++)
+	col += SDCV.Kvec[tri[k].VNR[l]];
+      col /= 3.;
+
+      //    if(col>0.){
+      for(l=0 ; l<3 ; l++){
+	i = tri[k].VNR[l];
+	fprintf(fpx,"%f ",XY[2*i]);
+	fprintf(fpy,"%f ",XY[2*i+1]);
+      }
+      fprintf(fpx,"\n");
+      fprintf(fpy,"\n");
+      fprintf(fpc,"%f %f %f \n",col,col,col);
+      //}
+    }
+    fclose(fpx);
+    fclose(fpy);
+    fclose(fpc);
+  
+  }
+
+  if(RhoIni.NumSubdom>0){
+    fpx = fopen("Octave/SubdomRhoinix.dat","w");
+    fpy = fopen("Octave/SubdomRhoiniy.dat","w");
+    fpc = fopen("Octave/SubdomRhoinic.dat","w");
+    for(k=0 ; k<NT ; k++){
+      col=0;
+      for(l=0 ; l<3 ; l++)
+	col += RhoIni.Kvec[tri[k].VNR[l]];
+      col /= 3.;
+
+      //    if(col>0.){
+      for(l=0 ; l<3 ; l++){
+	i = tri[k].VNR[l];
+	fprintf(fpx,"%f ",XY[2*i]);
+	fprintf(fpy,"%f ",XY[2*i+1]);
+      }
+      fprintf(fpx,"\n");
+      fprintf(fpy,"\n");
+      fprintf(fpc,"%f %f %f \n",col,col,col);
+      //}
+    }
+    fclose(fpx);
+    fclose(fpy);
+    fclose(fpc);
+  
+  }
+
+}
+
+
+void octavegridplot()
+{
+  int k, l,i;
+  FILE *fpx, *fpy, *fpc, *fp;
+
+  fpx = fopen("Octave/Gridx.dat","w");
+  fpy = fopen("Octave/Gridy.dat","w");
+  
+  for(k=0 ; k<NT ; k++)
+    {
+      for(l=0 ; l<3 ; l++)
+	{
+	  fprintf(fpx,"%f ",XY[2*tri[k].VNR[l]]);
+	  fprintf(fpy,"%f ",XY[2*tri[k].VNR[l]+1]);
+	}
+      fprintf(fpx,"\n");
+      fprintf(fpy,"\n");
+    }
+
+  fclose(fpx);
+  fclose(fpy);
+
+  fpx = fopen("Octave/Exits.dat","w");
+  fpy = fopen("Octave/Entrees.dat","w");
+
+  for(i=0 ; i<PED.numexit ; i++)
+    fprintf(fpx,"%f %f %f %f\n",PED.exit[0][i],PED.exit[1][i],PED.exit[2][i],PED.exit[3][i]);
+
+  for(i=0 ; i<PED.numentree ; i++)
+    fprintf(fpy,"%f %f %f %f\n",PED.entree[0][i],PED.entree[1][i],PED.entree[2][i],PED.entree[3][i]);
+
+  fclose(fpx);
+  fclose(fpy);
+
+  fpx = fopen("Octave/Attractors.dat","w");
+
+  for(i=0 ; i<PED.AS ; i++)
+    fprintf(fpx,"%f %f %f %f\n",PED.ASx[0][i],PED.ASx[1][i],PED.ASx[2][i],PED.ASx[3][i]);
+  
+  fclose(fpx);
+
+  fp = fopen("Octave/MS.dat","w");
+
+  for(i=0 ; i<PED.MS ; i++)
+    fprintf(fp,"%f %f %f %f\n",PED.MSx[0][i],PED.MSx[1][i],PED.MSx[2][i],PED.MSx[3][i]);
+
+  fclose(fp);
+
+  
+  fp = fopen("Octave/Grid.am_fmt","w");
+  fprintf(fp,"%d %d\n",NK,NT);
+  for(k=0 ; k<NT ; k++){
+    for(l=0 ; l<3 ; l++)
+      fprintf(fp,"%d ",tri[k].VNR[l]);
+    fprintf(fp,"\n");
+  }
+  for(i=0 ; i<NK ; i++){
+    for(l=0 ; l<2 ; l++)
+      fprintf(fp,"%f ",XY[2*i+l]);
+    fprintf(fp,"\n");
+  }
+  
+  fclose(fp);
+
+  fp = fopen("Octave/MatlabFlags.dat","w");
+  fprintf(fp,"SDRhoFlag SDFDFlag AttFlag NumExit NumMS \n");
+  fprintf(fp,"%d %d %d %d  %d \n",RhoIni.NumSubdom,SDCV.NumSubdom,Att.NumSubdom,PED.numexit,PED.MS);
+  fclose(fp);
+
+
+}
+
+
+void octaveplotvec(REAL *u[2], char *name,int loop)
+{
+  int i, j, kk=0, k1=0;
+  REAL xx, yy, zz, zz1, zz2, *bvel;
+  char fname[200], pname[204], xname[204], yname[204], zname[204];
+  FILE *fp, *fpx, *fpy, *fpz;
+
+  //  REAL hx=gridwidth(), hy=gridwidth()/alpha;
+  REAL x1=refine.boundx_ll;
+  REAL y1=refine.boundy_ll;
+  REAL x2=refine.boundx_ur;
+  REAL y2=refine.boundy_ur;
+  REAL xdiff=x2-x1, ydiff=y2-y1;
+  REAL hx=xdiff*alphax, hy=ydiff*alphay;
+  int N=(int)(xdiff/hx+0.5);
+  int M=(int)(ydiff/hy+0.5);
+
+  // plot of ||u||
+  /*
+  bvel = (REAL *)calloc( NK , sizeof(REAL ));
+  for(i=0 ; i<NK ; i++)
+    bvel[i] = sqrt(pow(u[0][i],2.)+pow(u[1][i],2.));
+  octaveplot(bvel,"BVel",0.,-1.,loop);
+  free(bvel);
+  */
+
+  hx=xdiff/(REAL)(N-1);
+  hy=ydiff/(REAL)(M-1);
+
+  sprintf(fname,"Octave/%s_x",name);
+  add_numer_to_string(fname,loop,7);
+  sprintf(xname,"%s.dat",fname);
+
+  sprintf(fname,"Octave/%s_y",name);
+  add_numer_to_string(fname,loop,7);
+  sprintf(yname,"%s.dat",fname);
+
+  sprintf(fname,"Octave/%s_z",name);
+  add_numer_to_string(fname,loop,7);
+  sprintf(zname,"%s.dat",fname);
+
+
+  fpx=fopen(xname,"w");
+  fpy=fopen(yname,"w");
+  fpz=fopen(zname,"w");
+
+  if(!fpx) ErrorMessage("x: Can't open file","octaveplot");
+  if(!fpy) ErrorMessage("y: Can't open file","octaveplot");
+  if(!fpz) ErrorMessage("z: Can't open file","octaveplot");
+
+  for(i=0 ; i<M ; i++){
+    yy = y1 + i*hy;
+    fprintf(fpy,"%f\n",yy);
+
+    for(j=0 ; j<N ; j++){
+      xx = x1 + j*hx;
+      if(i==0) fprintf(fpx,"%f\n",xx);
+
+      k1=search_tri(kk,xx,yy,0);
+      if(k1>=0){
+	kk=k1;
+	zz1=uh(kk,xx,yy,u[0]);
+	zz2=uh(kk,xx,yy,u[1]);
+	fprintf(fpz,"%f %f ",zz1,zz2);
+      } else {
+	fprintf(fpz,"0. 0. ");
+      }
+    }
+    fprintf(fpz,"\n");
+
+  }
+  fclose(fpx);
+  fclose(fpy);
+  fclose(fpz);
+
+  sprintf(fname,"Octave/%s",name);
+  add_numer_to_string(fname,loop,7);
+  sprintf(pname,"%s.m",fname);
+
+  fp=fopen(pname,"w");
+  if(!fp) ErrorMessage("2: Can't open file","octaveplot");
+
+
+  fprintf(fp,"x1=load('../%s');\n",xname);
+  fprintf(fp,"x2=load('../%s');\n",yname);
+  fprintf(fp,"zz=load('../%s');\n",zname);
+
+  fprintf(fp,"N=length(x1);\n");
+  fprintf(fp,"M=length(x2);\n");
+
+  fprintf(fp,"[xx,yy]=meshgrid(x1,x2);\n");
+  fprintf(fp,"for i=1:M\n");
+  fprintf(fp,"for j=1:N\n");
+  fprintf(fp,"  zz1(i,j)=zz(i,2*j-1);\n");
+  fprintf(fp,"  zz2(i,j)=zz(i,2*j);\n");
+  fprintf(fp,"end\n");
+  fprintf(fp,"end\n");
+
+  sprintf(fname,"../Videodata/%s",name);
+  add_numer_to_string(fname,loop,7);
+  sprintf(pname,"%s.png",fname);
+
+  fprintf(fp,"quiver(xx,yy,zz1,zz2);\n");
+
+  fprintf(fp,"pbaspect([%f,%f,1]);\n",refine.boundx_ur-refine.boundx_ll,refine.boundy_ur-refine.boundy_ll);
+  fprintf(fp,"plotboxaspect = pbaspect;\n");
+
+  //  fprintf(fp,"print('%s', '-color', '-dpng');\n",pname);
+
+  fclose(fp);
+
+
+
+
+}
+
+
+void octaveplot(REAL *u, char *name, REAL min, REAL max, int loop)
+{
+  int i, j, kk=0, k1=0;
+  REAL xx, yy, zz;
+  char fname[200], pname[204], xname[204], yname[204], zname[204];
+  FILE *fp, *fpx, *fpy, *fpz;
+
+  //  REAL hx=gridwidth(), hy=gridwidth()/alpha;
+  REAL x1=refine.boundx_ll;
+  REAL y1=refine.boundy_ll;
+  REAL x2=refine.boundx_ur;
+  REAL y2=refine.boundy_ur;
+  REAL xdiff=x2-x1, ydiff=y2-y1;
+  REAL hx=xdiff*alphax, hy=ydiff*alphay;
+  int N=(int)(xdiff/hx+0.5);
+  int M=(int)(ydiff/hy+0.5);
+  hx=xdiff/(REAL)(N-1);
+  hy=ydiff/(REAL)(M-1);
+
+  // max dann noch berechnen
+  if(min<0)
+    min = FieldMin(u,NK);
+  if(max<0)
+    max = FieldMax(u,NK);
+
+  sprintf(fname,"Octave/%s_x",name);
+  add_numer_to_string(fname,loop,7);
+  sprintf(xname,"%s.dat",fname);
+
+  sprintf(fname,"Octave/%s_y",name);
+  add_numer_to_string(fname,loop,7);
+  sprintf(yname,"%s.dat",fname);
+
+  sprintf(fname,"Octave/%s_z",name);
+  add_numer_to_string(fname,loop,7);
+  sprintf(zname,"%s.dat",fname);
+
+
+  fpx=fopen(xname,"w");
+  fpy=fopen(yname,"w");
+  fpz=fopen(zname,"w");
+
+  if(!fpx) ErrorMessage("x: Can't open file","octaveplot");
+  if(!fpy) ErrorMessage("y: Can't open file","octaveplot");
+  if(!fpz) ErrorMessage("z: Can't open file","octaveplot");
+
+  for(i=0 ; i<M ; i++){
+    yy = y1 + i*hy;
+    fprintf(fpy,"%f\n",yy);
+
+    for(j=0 ; j<N ; j++){
+      xx = x1 + j*hx;
+      if(i==0) fprintf(fpx,"%f\n",xx);
+
+      k1=search_tri(kk,xx,yy,0);
+      zz = 0.;
+      if(k1>=0){
+  kk=k1;
+  zz=uh(kk,xx,yy,u);
+      }
+      fprintf(fpz,"%f ",zz);
+    }
+    fprintf(fpz,"\n");
+
+  }
+  fclose(fpx);
+  fclose(fpy);
+  fclose(fpz);
+
+  sprintf(fname,"Octave/%s",name);
+  add_numer_to_string(fname,loop,7);
+  sprintf(pname,"%s.m",fname);
+
+  fp=fopen(pname,"w");
+  if(!fp) ErrorMessage("2: Can't open file","octaveplot");
+
+
+  fprintf(fp,"x1=load('../%s');\n",xname);
+  fprintf(fp,"x2=load('../%s');\n",yname);
+  fprintf(fp,"zz=load('../%s');\n",zname);
+  fprintf(fp,"[xx,yy]=meshgrid(x1,x2);\n");
+  fprintf(fp,"surf(xx,yy,zz);\n");
+
+  sprintf(fname,"../Videodata/%s",name);
+  add_numer_to_string(fname,loop,7);
+
+  /*
+  fprintf(fp,"view(35,45);\n");
+  fprintf(fp,"daspect([1 1 1]);\n");
+  fprintf(fp,"axis ([%f, %f, %f, %f, %f, %f]);\n",refine.boundx_ll
+    ,refine.boundx_ur,refine.boundy_ll,refine.boundy_ur,min,max);
+  */
+  
+  sprintf(pname,"%s.png",fname);
+  //  fprintf(fp,"print('%s', '-color', '-dpng');\n",pname);
+
+  fclose(fp);
+
+}
+
+void octaveplotdomain()
+{
+  int k, j, j1, j2;
+  FILE *fp;
+
+  fp=fopen("Octave/Domain.dat","w");
+
+  if(!fp) ErrorMessage("Can't open file","octaveplotdomain");
+
+  for(k=0 ; k<NT ; k++){
+    for(j=0 ; j<3 ; j++){
+      if(tri[k].NEIGH[j]<0){
+	j1 = tri[k].VNR[(j+1)%3];
+	j2 = tri[k].VNR[(j+2)%3];
+	fprintf(fp,"%f %f %f %f\n",XY[2*j1],XY[2*j1+1],XY[2*j2],XY[2*j2+1]);
+      }
+    }
+  }
+  fclose(fp);
+
+}

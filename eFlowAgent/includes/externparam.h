@@ -1,0 +1,61 @@
+#include "std.h"
+
+QUADRA *quad;
+SUBDOM SDCV, RhoIni, Att;
+SOLV solver;
+System lgs;
+MATRIX MAT;
+VIDEO video;
+SIRagent siragent;
+
+ShortestPath *SP;
+int EikonalMode;
+
+NEUTRALS ZO;
+
+DAT PED;
+char femlog[200];
+MATRIX MAT;
+REAL EpsReg;
+int QuadN, QuadM;
+Basis  phi;
+INFOS  msg;
+
+Monitoring MONI;
+
+int    bandwidth;
+
+int DIM;
+
+QUADRATUR QUAD;
+
+
+/* Fuer jedes Gitter neu in GRID*/
+
+TRI refine;
+GN *node;
+GE *tri;
+int NT, NK, *nach;
+REAL *XY;
+POLY DomainPoly, *Dpoly;
+
+/********************************/
+
+INFO  output;
+REAL PI=3.141592653589793;
+REAL  EPS=1.E-2;
+REAL  GridEpsZero=1.E-12, EpsZero=1.E-12, EpsReg=1.E-12;
+
+
+// nach YUV
+const REAL CoMa[3][3]={
+  {0.299,0.587,0.114},
+  {-0.168,-0.331,0.499},
+  {0.499,-0.419,-0.08}};
+
+// nach RGB
+const REAL CoMaI[3][3]={
+  {1,-0.0034216,1.4036577},
+  {1,-0.3430364,-0.7146896},
+  {1,1.7753109,-0.0014986}};
+

@@ -1,0 +1,229 @@
+{
+  "name": "default",
+  "Scenario": {
+    "charLength": 12,
+    "charDensity": 8,
+    "charVelocity": 1.34,
+    "startPersons": 60,
+    "randPersons": 1,
+    "maxTime": 100
+  },
+  "Fundamentaldiagramm": 5,
+  "Infection": {
+    "percentInfected": 0.05,
+    "criticalDistance": 0.5,
+    "infectionRate": 65,
+    "percentRemoved": 0.1,
+    "resistanceTime": 1,
+    "moveMode": 0
+  },
+  "Measurementstations": [],
+  "Entrance": [],
+    "Exit": [
+      {
+	"wallId": "7J_C2nLvmIIsKlGzJWt0JRmVap1gpU5_NjHesAfVzN",
+	"xr": 505.00211313160355,
+	"yr": 218,
+	  "xl": 723.0112700352189,
+	  "yl": 218,
+	  "weight": 1
+    }
+  ],
+    "Attractors": [
+	{
+	    "wallId": "-KBYwyQJYVtPXJz6IjK9QKQOF-sPF5_NO_6z8ToBXw",
+	    "xr": 70,
+	    "yr": 820,
+	    "xl": 70,
+	    "yl": 650,
+	    "strength": 0.25,
+	    "range": 4,
+	    "frequency": 0.1
+	},
+	{
+	    "wallId": "Kb0zEsqg3mJYWVGMaizjF7C8vZ8j1jFWJMay0wvBsa",
+	    "xr": 390,
+	    "yr": 820,
+	    "xl": 390,
+	    "yl": 650,
+	    "strength": -0.4,
+	    "range": 2,
+	    "frequency": 0.2
+	},
+	{
+	    "wallId": "RmVap1gpU5_NjHesAfVzNgnueH21A-MpyGvhs6pxDJ",
+	    "xr": 455,
+	    "yr": 820,
+	    "xl": 455,
+	    "yl": 650,
+	    "strength": 0.2,
+	    "range": 2,
+	    "frequency": 0.4
+	},
+	{
+	    "wallId": "sqPXu5KoWuViUL82eXj9E7J_C2nLvmIIsKlGzJWt0J",
+	    "xr": 770,
+	    "yr": 820,
+	    "xl": 770,
+	    "yl": 650,
+	    "strength": 0.25,
+	    "range": 4,
+	    "frequency": 0.1
+	}
+    ],
+  "SubdomainsFD": [],
+    "SubdomainsRhoInit": [
+    [
+      53,
+      545,
+      408,
+      545,
+      408,
+      223,
+      53,
+      223
+    ]
+    ],
+  "Refinement": {
+    "decompositionLevel": "medium",
+    "localRefinement": 0,
+    "localMarkMethod": 0,
+    "globalRefinement": 0
+  },
+  "Domainpolygon": {
+    "numberPoints": 12,
+    "segmentPoints": [
+      426,
+      218,
+      429,
+      823,
+      417,
+      823,
+      414,
+      218,
+      41,
+      218,
+      44,
+      973,
+      800,
+      976,
+      799,
+      218,
+      578,
+      476,
+      658,
+      477,
+      661,
+      720,
+      578,
+      720
+    ],
+    "numberSegments": 12,
+    "pointOrder": [
+      0,
+      1,
+      1,
+      2,
+      2,
+      3,
+      3,
+      4,
+      4,
+      5,
+      5,
+      6,
+      6,
+      7,
+      7,
+      0,
+      8,
+      9,
+      9,
+      10,
+      10,
+      11,
+      11,
+      8
+    ],
+    "numberHoles": 1,
+    "holes": [
+      {
+        "x": 618.7262045738954,
+        "y": 598.9983202734595
+      }
+    ]
+  },
+  "Grid": {},
+  "PolygonCorners": {
+    "corners": [
+      {
+        "id": "RmVap1gpU5_NjHesAfVzN",
+        "x": 426,
+        "y": 782
+      },
+      {
+        "id": "gnueH21A-MpyGvhs6pxDJ",
+        "x": 429,
+        "y": 177
+      },
+      {
+        "id": "Kb0zEsqg3mJYWVGMaizjF",
+        "x": 417,
+        "y": 177
+      },
+      {
+        "id": "7C8vZ8j1jFWJMay0wvBsa",
+        "x": 414,
+        "y": 782
+      },
+      {
+        "id": "-KBYwyQJYVtPXJz6IjK9Q",
+        "x": 41,
+        "y": 780
+      },
+      {
+        "id": "KQOF-sPF5_NO_6z8ToBXw",
+        "x": 44,
+        "y": 27
+      },
+      {
+        "id": "sqPXu5KoWuViUL82eXj9E",
+        "x": 800,
+        "y": 24
+      },
+      {
+        "id": "7J_C2nLvmIIsKlGzJWt0J",
+        "x": 799,
+        "y": 783
+      }
+    ],
+    "closed": true
+  },
+  "HoleCorners": [
+    {
+      "corners": [
+        {
+          "id": "jemOz2dfgkp8lh-x_Xt3K",
+          "x": 578,
+          "y": 524
+        },
+        {
+          "id": "kf5ER4yEk7565RLzvSWyh",
+          "x": 658,
+          "y": 523
+        },
+        {
+          "id": "PYDy5iwXuHLXzPo4_v-Nf",
+          "x": 661,
+          "y": 280
+        },
+        {
+          "id": "Ce64IhTUIqdmzdgxrUukW",
+          "x": 578,
+          "y": 280
+        }
+      ],
+      "closed": true
+    }
+  ]
+}

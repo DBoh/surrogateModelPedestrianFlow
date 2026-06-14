@@ -1,0 +1,250 @@
+/*
+  \file bound_integrals.c
+  \brief matrices of of boundary integrals for the LGS-system
+*/
+#include <ped.h>
+
+extern SOLV solver;
+extern REAL GridEpsZero;
+extern DAT PED;
+extern QUADRATUR QUAD;
+extern int NK, NT, bandwidth, *nach;
+extern GN *node;
+extern GE *tri;
+extern REAL *XY;
+extern MATRIX MAT;
+extern SUBDOM SDCV;
+extern Basis phi;
+extern TRI refine;
+
+void MassElemBound(REAL [2][2], REAL [2], REAL , REAL );
+void MassElemBoundV(REAL MB[2][2], REAL *v, REAL g1[2], REAL g2[2], int kk, int ll);
+
+
+void BoundIntegral(REAL *KB, REAL *v,int NumDoors, REAL *Door[4])
+{
+  int k, i, j, ld, l, j1, j2, ll, ig, jg, mi;
+  REAL a1, a2, b1, b2, c1, c2, d1, d2;
+  REAL MB[6][6], p[2], q[2];
+
+  for(k=0 ; k<NK*bandwidth ; k++)
+    KB[k] = 0.;
+
+  for(k=0 ; k<NT ; k++){
+
+    for(ll=0 ; ll<3 ; ll++){
+
+      if(tri[k].NEIGH[ll]<0){
+	j1 = tri[k].VNR[(ll+1)%3];
+	j2 = tri[k].VNR[(ll+2)%3];
+
+
+	c1 = XY[2*j1]; c2 = XY[2*j1+1];
+	d1 = XY[2*j2]; d2 = XY[2*j2+1];
+
+	for(ld=0 ; ld<NumDoors ; ld++){
+	  
+	  a1 = Door[0][ld]; a2 = Door[1][ld];
+	  b1 = Door[2][ld]; b2 = Door[3][ld];
+
+	  if(IntersectionSegment(a1,a2,b1,b2,c1,c2,d1,d2,&p[0],&p[1],&q[0],&q[1])){
+	    mass_elem_b_v_loc(MB,k,ll,v,p,q);
+
+	    for(i=0 ; i<3 ; i++){
+	      ig = tri[k].VNR[i]; //j1, j2
+	      mi = node[ig].pointmat; //j1, j2
+	      for(j=0 ; j<3 ; j++){
+		jg = tri[k].VNR[j];
+		
+		if(i==j)
+		  KB[mi] += MB[i][i];
+		else {
+		  for(l=mi+1 ; l<node[ig+1].pointmat ; l++)
+		    if(jg==nach[l])
+		      KB[l] += MB[i][j];
+		}
+	      }
+	    }
+	    
+	  } // endif intersection
+	} // endif numdoors
+      } // if Randdreieck
+    } // for l
+  } // for k
+}
+
+void OneBoundIntegral(REAL *KB, REAL *v, REAL Door[4])
+{
+  int k, i, j, l, ld, j1, j2, ll, ig, jg, mi, is;
+  REAL a1, a2, b1, b2, c1, c2, d1, d2, length;
+  REAL MB[6][6], p[2], q[2], det;
+
+  for(k=0 ; k<NK*bandwidth ; k++)
+    KB[k] = 0.;
+
+  for(k=0 ; k<NT ; k++){
+
+    for(ll=0 ; ll<3 ; ll++){
+
+      if(tri[k].NEIGH[ll]<0){
+	j1 = tri[k].VNR[(ll+1)%3];
+	j2 = tri[k].VNR[(ll+2)%3];
+
+
+	c1 = XY[2*j1]; c2 = XY[2*j1+1];
+	d1 = XY[2*j2]; d2 = XY[2*j2+1];
+
+	  
+	a1 = Door[0]; a2 = Door[1];
+	b1 = Door[2]; b2 = Door[3];
+
+	if(IntersectionSegment(a1,a2,b1,b2,c1,c2,d1,d2,&p[0],&p[1],&q[0],&q[1])){
+	  mass_elem_b_v_loc(MB,k,ll,v,p,q);
+
+	  for(i=0 ; i<3 ; i++){
+	    ig = tri[k].VNR[i]; //j1, j2
+	    mi = node[ig].pointmat; //j1, j2
+	    for(j=0 ; j<3 ; j++){
+	      jg = tri[k].VNR[j];
+		
+	      if(i==j)
+		KB[mi] += MB[i][i];
+	      else {
+		for(l=mi+1 ; l<node[ig+1].pointmat ; l++)
+		  if(jg==nach[l])
+		    KB[l] += MB[i][j];
+	      }
+	    }
+	  }
+	  
+	} // endif intersection
+      } // if Randdreieck
+    } // for l
+  } // for k
+}
+
+void BoundGradNuIntegral(REAL *KB, REAL *v,int NumDoors, REAL *Door[4])
+{
+  int k, i, j, l, ld, j1, j2, ll, ig, jg, mi, is;
+  REAL a1, a2, b1, b2, c1, c2, d1, d2, length;
+  REAL KBloc[6][6], p[2], q[2], det;
+  
+  for(k=0 ; k<NK*bandwidth ; k++)
+    KB[k] = 0.;
+
+  for(k=0 ; k<NT ; k++){
+
+    for(ll=0 ; ll<3 ; ll++){
+
+      if(tri[k].NEIGH[ll]<0){
+	j1 = tri[k].VNR[(ll+1)%3];
+	j2 = tri[k].VNR[(ll+2)%3];
+
+
+	c1 = XY[2*j1]; c2 = XY[2*j1+1];
+	d1 = XY[2*j2]; d2 = XY[2*j2+1];
+
+	for(ld=0 ; ld<NumDoors ; ld++){
+	  
+	  a1 = Door[0][ld]; a2 = Door[1][ld];
+	  b1 = Door[2][ld]; b2 = Door[3][ld];
+
+	  if(IntersectionSegment(a1,a2,b1,b2,c1,c2,d1,d2,&p[0],&p[1],&q[0],&q[1])){
+
+	    konv_elem_b_v_loc(KBloc,k,ll,v,p,q);
+
+	    
+	    for(i=0 ; i<3 ; i++){
+	      ig = tri[k].VNR[i]; //j1, j2
+	      mi = node[ig].pointmat; //j1, j2
+	      for(j=0 ; j<3 ; j++){
+		jg = tri[k].VNR[j];
+		
+		if(i==j)
+		  KB[mi] += KBloc[i][i];
+		else {
+		  for(l=mi+1 ; l<node[ig+1].pointmat ; l++)
+		    if(jg==nach[l])
+		      KB[l] += KBloc[i][j];
+		}
+	      }
+	    }
+	    
+	  } // endif intersection
+	} // endif numdoors
+      } // if Randdreieck
+    } // for l
+  } // for k
+}
+
+/*!
+  \f$\sum_{l=1}^2v_l\int\limits_a^b\varphi_l\,\varphi_i\,\varphi_j~dx\,,\quad [a,b]\subset[0,1]\f$
+*/
+void MassElemBound(REAL MB[2][2], REAL v[2], REAL a, REAL b)
+{
+  int i, j, l;
+  REAL a2=pow(a,2.), a3=pow(a,3.), a4=pow(a,4.);
+  REAL b2=pow(b,2.), b3=pow(b,3.), b4=pow(b,4.);
+  REAL f2=0.5, f3=1.0/3.0, f4=0.25;
+
+  MB[0][0]=(v[0]*(a - b)*(a + b - 2)*(a2 - 2*a + b2 - 2*b + 2.0))*f4 - v[1]*(a4*f4 - (2.0*a3)*f3 + a2*f2 - b4*f4 + (2.0*b3)*f3 - b2*f2);
+  MB[0][1]=- v[1]*(- a4*f4 + a3*f3 + b4*f4 - b3*f3) - v[0]*(a4*f4 - (2.0*a3)*f3 + a2*f2 - b4*f4 + (2.0*b3)*f3 - b2*f2);
+  MB[1][0]=MB[0][1];
+  MB[1][1]=- v[1]*(a4*f4 - b4*f4) - v[0]*(- a4*f4 + a3*f3 + b4*f4 - b3*f3);
+}
+
+
+/*!
+  \brief 1d-Integral entlang einer Strecke, die Teil einer Dreieckskante ist
+
+  \f$\int\limits_{g_1}^{g_2}\varphi_i\,\varphi_j\,v~do_x\,,\quad \overline{g_1g_2}\subset \partial T_k\f$
+*/
+void MassElemBoundV(REAL MB[2][2], REAL *v, REAL g1[2], REAL g2[2], int kk, int ll)
+{
+  int i, j, l;
+  REAL v1, v2, st1[2], st2[2], std1[2], std2[2];
+  REAL phi_i_s1, phi_i_s2, phi_j_s1, phi_j_s2, scal;
+
+  // Stuetzstellen fuer Gamma auf Dreieckskante
+  for(l=0 ; l<2 ; l++){
+    st1[l] = g1[l] + QUAD.st_1d[0]*(g2[l]-g1[l]);
+    st2[l] = g1[l] + QUAD.st_1d[1]*(g2[l]-g1[l]);
+  }
+
+  TransformPoint(st1,kk,(ll+1)%3,std1);
+  TransformPoint(st2,kk,(ll+1)%3,std2);
+
+  //  if(std2<=std1) ErrorMessage("Falsche Reihenfolge","MassElemBoundV");
+  // QUAD.st_1d[0/1], QUAD.w_1d[0/1]
+  // Werte von v an den Stuetzstellen
+  v1 = uh(kk,st1[0],st1[1],v);
+  v2 = uh(kk,st2[0],st2[1],v);
+
+  // Werte der Basisfunktionen an den Stuetzstellen
+  phi_i_s1=std1[0];
+  phi_i_s2=std2[0];
+  phi_j_s1=1-std1[0];
+  phi_j_s2=1-std2[0];
+
+  // laenge von Gamma
+  scal = sqrt(pow(g2[0]-g1[0],2.)+pow(g2[1]-g1[1],2.));
+
+  //  printf("Laengenstueck: %f\n",scal);
+
+  // int_Gamma phi_i*phi_j*v dox mit obiger Quadraturformel
+  MB[0][0] = phi_i_s1*phi_i_s1*v1*QUAD.w_1d[0];
+  MB[0][0] += phi_i_s2*phi_i_s2*v2*QUAD.w_1d[1];
+  MB[0][0] *= scal;
+
+  MB[0][1] = phi_i_s1*phi_j_s1*v1*QUAD.w_1d[0];
+  MB[0][1] += phi_i_s2*phi_j_s2*v2*QUAD.w_1d[1];
+  MB[0][1] *= scal;
+
+  MB[1][0] = MB[0][1];
+
+  MB[1][1] = phi_j_s1*phi_j_s1*v1*QUAD.w_1d[0];
+  MB[1][1] += phi_j_s2*phi_j_s2*v2*QUAD.w_1d[1];
+  MB[1][1] *= scal;
+
+}
+

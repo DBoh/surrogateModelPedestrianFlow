@@ -1,0 +1,943 @@
+{
+  "name": "default",
+  "Scenario": {
+    "charLength": 28,
+    "charDensity": 8,
+    "charVelocity": 1.34,
+    "startPersons": 200,
+    "randPersons": 0,
+    "maxTime": 100
+  },
+  "Fundamentaldiagramm": 5,
+  "Infection": {
+    "percentInfected": 0.05,
+    "criticalDistance": 0.5,
+    "infectionRate": 65,
+    "percentRemoved": 0.1,
+    "resistanceTime": 1,
+    "moveMode": 0
+  },
+  "Measurementstations": [],
+  "Entrance": [],
+  "Exit": [
+    {
+      "wallId": "zb03f56cMvBKknjARvrst_2jiqixehjKZeWoHE1cQR",
+      "xr": 239.98571033765222,
+      "yr": 696.8187212459154,
+      "xl": 336.0079495391218,
+      "yl": 695.6571619007364,
+      "weight": 1
+    },
+    {
+      "wallId": "ZW8HmHfKDVhAGuep9td8GVK95FPZy_ximjeV_5vV6r",
+      "xr": 667.9912224150756,
+      "yr": 429.24641705926115,
+      "xl": 759.0007934540045,
+      "yl": 429.8873295313663,
+      "weight": 1
+    }
+  ],
+  "Attractors": [],
+  "SubdomainsFD": [],
+  "SubdomainsRhoInit": [
+    [
+      25,
+      979,
+      186,
+      979,
+      186,
+      859,
+      25,
+      859
+    ],
+    [
+      451,
+      977,
+      756,
+      977,
+      756,
+      760,
+      451,
+      760
+    ],
+    [
+      771,
+      972,
+      980,
+      972,
+      980,
+      764,
+      771,
+      764
+    ],
+    [
+      31,
+      837,
+      157,
+      837,
+      157,
+      704,
+      31,
+      704
+    ],
+    [
+      29,
+      682,
+      148,
+      682,
+      148,
+      544,
+      29,
+      544
+    ],
+    [
+      25,
+      522,
+      148,
+      522,
+      148,
+      433,
+      25,
+      433
+    ],
+    [
+      24,
+      367,
+      328,
+      367,
+      328,
+      206,
+      24,
+      206
+    ],
+    [
+      478,
+      370,
+      651,
+      370,
+      651,
+      210,
+      478,
+      210
+    ],
+    [
+      896,
+      294,
+      980,
+      294,
+      980,
+      204,
+      896,
+      204
+    ],
+    [
+      895,
+      413,
+      979,
+      413,
+      979,
+      311,
+      895,
+      311
+    ]
+  ],
+  "Refinement": {
+    "decompositionLevel": "medium",
+    "localRefinement": 0,
+    "localMarkMethod": 0,
+    "globalRefinement": 0
+  },
+  "Domainpolygon": {
+    "numberPoints": 84,
+    "segmentPoints": [
+      358,
+      710,
+      472,
+      709,
+      473,
+      694,
+      225,
+      697,
+      224,
+      979,
+      23,
+      979,
+      25,
+      857,
+      186,
+      858,
+      187,
+      756,
+      175,
+      758,
+      175,
+      846,
+      26,
+      843,
+      26,
+      697,
+      174,
+      697,
+      173,
+      727,
+      185,
+      729,
+      186,
+      617,
+      175,
+      616,
+      175,
+      685,
+      27,
+      686,
+      24,
+      541,
+      175,
+      539,
+      174,
+      589,
+      188,
+      588,
+      188,
+      480,
+      173,
+      479,
+      174,
+      526,
+      23,
+      527,
+      24,
+      430,
+      174,
+      428,
+      172,
+      450,
+      187,
+      450,
+      187,
+      430,
+      297,
+      430,
+      298,
+      414,
+      25,
+      413,
+      24,
+      203,
+      386,
+      205,
+      385,
+      415,
+      333,
+      415,
+      332,
+      431,
+      463,
+      430,
+      463,
+      416,
+      400,
+      416,
+      401,
+      206,
+      654,
+      207,
+      653,
+      415,
+      633,
+      416,
+      633,
+      429,
+      775,
+      430,
+      775,
+      202,
+      980,
+      203,
+      981,
+      298,
+      816,
+      298,
+      814,
+      359,
+      826,
+      358,
+      828,
+      311,
+      984,
+      311,
+      983,
+      417,
+      826,
+      416,
+      825,
+      385,
+      811,
+      385,
+      812,
+      430,
+      853,
+      430,
+      850,
+      691,
+      833,
+      691,
+      833,
+      710,
+      979,
+      711,
+      980,
+      978,
+      771,
+      977,
+      772,
+      694,
+      505,
+      693,
+      505,
+      710,
+      760,
+      707,
+      759,
+      977,
+      357,
+      979,
+      281,
+      494,
+      280,
+      634,
+      720,
+      630,
+      722,
+      493,
+      495,
+      429,
+      494,
+      416,
+      600,
+      415,
+      600,
+      430
+    ],
+    "numberSegments": 84,
+    "pointOrder": [
+      0,
+      1,
+      1,
+      2,
+      2,
+      3,
+      3,
+      4,
+      4,
+      5,
+      5,
+      6,
+      6,
+      7,
+      7,
+      8,
+      8,
+      9,
+      9,
+      10,
+      10,
+      11,
+      11,
+      12,
+      12,
+      13,
+      13,
+      14,
+      14,
+      15,
+      15,
+      16,
+      16,
+      17,
+      17,
+      18,
+      18,
+      19,
+      19,
+      20,
+      20,
+      21,
+      21,
+      22,
+      22,
+      23,
+      23,
+      24,
+      24,
+      25,
+      25,
+      26,
+      26,
+      27,
+      27,
+      28,
+      28,
+      29,
+      29,
+      30,
+      30,
+      31,
+      31,
+      32,
+      32,
+      33,
+      33,
+      34,
+      34,
+      35,
+      35,
+      36,
+      36,
+      37,
+      37,
+      38,
+      38,
+      39,
+      39,
+      40,
+      40,
+      41,
+      41,
+      42,
+      42,
+      43,
+      43,
+      44,
+      44,
+      45,
+      45,
+      46,
+      46,
+      47,
+      47,
+      48,
+      48,
+      49,
+      49,
+      50,
+      50,
+      51,
+      51,
+      52,
+      52,
+      53,
+      53,
+      54,
+      54,
+      55,
+      55,
+      56,
+      56,
+      57,
+      57,
+      58,
+      58,
+      59,
+      59,
+      60,
+      60,
+      61,
+      61,
+      62,
+      62,
+      63,
+      63,
+      64,
+      64,
+      65,
+      65,
+      66,
+      66,
+      67,
+      67,
+      68,
+      68,
+      69,
+      69,
+      70,
+      70,
+      71,
+      71,
+      72,
+      72,
+      73,
+      73,
+      74,
+      74,
+      75,
+      75,
+      0,
+      76,
+      77,
+      77,
+      78,
+      78,
+      79,
+      79,
+      76,
+      80,
+      81,
+      81,
+      82,
+      82,
+      83,
+      83,
+      80
+    ],
+    "numberHoles": 2,
+    "holes": [
+      {
+        "x": 499.95361347200935,
+        "y": 562.7274671955807
+      },
+      {
+        "x": 548.5055292259084,
+        "y": 422.4881516587678
+      }
+    ]
+  },
+  "Grid": {},
+  "PolygonCorners": {
+    "corners": [
+      {
+        "id": "G62lTCI_VzoblkLotCpoy",
+        "x": 358,
+        "y": 290
+      },
+      {
+        "id": "esXXBSOxiNcW9LU0bS451",
+        "x": 472,
+        "y": 291
+      },
+      {
+        "id": "zb03f56cMvBKknjARvrst",
+        "x": 473,
+        "y": 306
+      },
+      {
+        "id": "_2jiqixehjKZeWoHE1cQR",
+        "x": 225,
+        "y": 303
+      },
+      {
+        "id": "GTBY7ca1YzOtVia_gep1g",
+        "x": 224,
+        "y": 21
+      },
+      {
+        "id": "qtsg89QG8_gdKjDRu31PW",
+        "x": 23,
+        "y": 21
+      },
+      {
+        "id": "6Xmosq5fDOf_L43FOVeZu",
+        "x": 25,
+        "y": 143
+      },
+      {
+        "id": "0TQjRF6d_Y84u7q3RQrfa",
+        "x": 186,
+        "y": 142
+      },
+      {
+        "id": "o1WkeA2hvXCLdn9Nz59Sz",
+        "x": 187,
+        "y": 244
+      },
+      {
+        "id": "1xKlz4iQIdP6doqXhUqNZ",
+        "x": 175,
+        "y": 242
+      },
+      {
+        "id": "0SjT5Kb5vLTy-D4SpK_21",
+        "x": 175,
+        "y": 154
+      },
+      {
+        "id": "mfuyldaxZUhhhP09OTGJV",
+        "x": 26,
+        "y": 157
+      },
+      {
+        "id": "YblkRQks4isphzuZblBLH",
+        "x": 26,
+        "y": 303
+      },
+      {
+        "id": "55qfnwrlup_dJIxgo-glX",
+        "x": 174,
+        "y": 303
+      },
+      {
+        "id": "RfbwDD-LCPAmA0ZRKWGJk",
+        "x": 173,
+        "y": 273
+      },
+      {
+        "id": "fXPjFCYJgPkNSEWevuoqE",
+        "x": 185,
+        "y": 271
+      },
+      {
+        "id": "DCrt5PZQDRdJGLfzGty8z",
+        "x": 186,
+        "y": 383
+      },
+      {
+        "id": "-fbr1SzuFidvvtfHK8FMi",
+        "x": 175,
+        "y": 384
+      },
+      {
+        "id": "A2oUp2_xVNubSw1BOfHkS",
+        "x": 175,
+        "y": 315
+      },
+      {
+        "id": "VFjTaCaadUb3NSyPNRTuG",
+        "x": 27,
+        "y": 314
+      },
+      {
+        "id": "JMHLvH0PpfuofvMrOEzcq",
+        "x": 24,
+        "y": 459
+      },
+      {
+        "id": "EadiONz9B3YGHAwr7hojR",
+        "x": 175,
+        "y": 461
+      },
+      {
+        "id": "1kfGF5IIlmVpJ9BmtftwE",
+        "x": 174,
+        "y": 411
+      },
+      {
+        "id": "4brAZttxHMEPWq38JdlwC",
+        "x": 188,
+        "y": 412
+      },
+      {
+        "id": "qxMiPiPsqG474YDCNndbZ",
+        "x": 188,
+        "y": 520
+      },
+      {
+        "id": "b8tdtxR2_aV1XHEdm6OMW",
+        "x": 173,
+        "y": 521
+      },
+      {
+        "id": "r1uJ3kQKRMH3uLIshkLH3",
+        "x": 174,
+        "y": 474
+      },
+      {
+        "id": "s9cImtpF9qwvcd87kU2KK",
+        "x": 23,
+        "y": 473
+      },
+      {
+        "id": "NZdERExt6DMp2Fb7aDZFM",
+        "x": 24,
+        "y": 570
+      },
+      {
+        "id": "b4kwiZ-dmTRgadoj5xGlh",
+        "x": 174,
+        "y": 572
+      },
+      {
+        "id": "fTfUQMXoDvqCGfCiPFJaP",
+        "x": 172,
+        "y": 550
+      },
+      {
+        "id": "82Vs4ub3K07TwkBaZxHPC",
+        "x": 187,
+        "y": 550
+      },
+      {
+        "id": "n0_g-vwILL4xWUvNE3G-x",
+        "x": 187,
+        "y": 570
+      },
+      {
+        "id": "FPMb_URcXKZazeiZhYNOU",
+        "x": 297,
+        "y": 570
+      },
+      {
+        "id": "eFlm1TS80NT7RqETGDScS",
+        "x": 298,
+        "y": 586
+      },
+      {
+        "id": "1BLhUi4VD78b9l5MiGX9o",
+        "x": 25,
+        "y": 587
+      },
+      {
+        "id": "rk6Om_dRMcCqcQ_hkNjh0",
+        "x": 24,
+        "y": 797
+      },
+      {
+        "id": "4u6il8txdZ99-vSN2R0zJ",
+        "x": 386,
+        "y": 795
+      },
+      {
+        "id": "Q-6tW4f0wRgn0VA9qwET1",
+        "x": 385,
+        "y": 585
+      },
+      {
+        "id": "lWVnWbWvt7c7N-eOaWpNl",
+        "x": 333,
+        "y": 585
+      },
+      {
+        "id": "et3stnTirirXFmheQgLYs",
+        "x": 332,
+        "y": 569
+      },
+      {
+        "id": "ZOB_c7LwPgc-Xmk-45azh",
+        "x": 463,
+        "y": 570
+      },
+      {
+        "id": "itsbK2CevBSgJ_Pw9zb1H",
+        "x": 463,
+        "y": 584
+      },
+      {
+        "id": "fzq1pbBN53WZq__CA3x3q",
+        "x": 400,
+        "y": 584
+      },
+      {
+        "id": "PS-NiUv_F9ZBResP-nYA-",
+        "x": 401,
+        "y": 794
+      },
+      {
+        "id": "_z-evXhBmb6QExJqUnGmQ",
+        "x": 654,
+        "y": 793
+      },
+      {
+        "id": "bLfabHjkjpSTwVKPQxwIr",
+        "x": 653,
+        "y": 585
+      },
+      {
+        "id": "pU2VQXL3okGutdg5HEij4",
+        "x": 633,
+        "y": 584
+      },
+      {
+        "id": "ZW8HmHfKDVhAGuep9td8G",
+        "x": 633,
+        "y": 571
+      },
+      {
+        "id": "VK95FPZy_ximjeV_5vV6r",
+        "x": 775,
+        "y": 570
+      },
+      {
+        "id": "Ztxkd3LPTsuXRp-2DUBA4",
+        "x": 775,
+        "y": 798
+      },
+      {
+        "id": "TObt-hbnzXsUXXfzBsDdB",
+        "x": 980,
+        "y": 797
+      },
+      {
+        "id": "Pf2LuoUohcztJJwarfSV7",
+        "x": 981,
+        "y": 702
+      },
+      {
+        "id": "aY6h-f6zsGgV_gZEiRu0Q",
+        "x": 816,
+        "y": 702
+      },
+      {
+        "id": "Urg2uw-C0pdiQjZnpM1V-",
+        "x": 814,
+        "y": 641
+      },
+      {
+        "id": "Bd9RZrOXMoiDQyfvVonr3",
+        "x": 826,
+        "y": 642
+      },
+      {
+        "id": "h6tpLA02HG19NBEL-uxW9",
+        "x": 828,
+        "y": 689
+      },
+      {
+        "id": "Rv0DBYFnZB1yj2FFmMoVM",
+        "x": 984,
+        "y": 689
+      },
+      {
+        "id": "2c8TwYtZsAAD6A3yCdunF",
+        "x": 983,
+        "y": 583
+      },
+      {
+        "id": "JBHC_mqHyBRidutNtOnQR",
+        "x": 826,
+        "y": 584
+      },
+      {
+        "id": "02JgMVC6VYLgLCaECZile",
+        "x": 825,
+        "y": 615
+      },
+      {
+        "id": "zWMEyJ1CWOjFbH8ekanrk",
+        "x": 811,
+        "y": 615
+      },
+      {
+        "id": "K0t_DKd6B9kGAJgJrWRjj",
+        "x": 812,
+        "y": 570
+      },
+      {
+        "id": "5tU_M4Fz6UvcCf4MT_tz7",
+        "x": 853,
+        "y": 570
+      },
+      {
+        "id": "0lol5ABPZ4CZk0AYhmwNc",
+        "x": 850,
+        "y": 309
+      },
+      {
+        "id": "0-30_wA-1ibm6SaOpH8HG",
+        "x": 833,
+        "y": 309
+      },
+      {
+        "id": "OaQJeEzYUqpv7nVEI6xj-",
+        "x": 833,
+        "y": 290
+      },
+      {
+        "id": "dWPYjz7bzwQBNGkecOZgW",
+        "x": 979,
+        "y": 289
+      },
+      {
+        "id": "gUwIv9cSdvQ-JfR9RMEeL",
+        "x": 980,
+        "y": 22
+      },
+      {
+        "id": "EaeXCR4GMrbZIcBi9_TAA",
+        "x": 771,
+        "y": 23
+      },
+      {
+        "id": "e8nUhVkJ05VrTgy5HG118",
+        "x": 772,
+        "y": 306
+      },
+      {
+        "id": "wBgEXDW8jrtaFzyUsSM2C",
+        "x": 505,
+        "y": 307
+      },
+      {
+        "id": "qctX2O7m7eILkZrMtv6nO",
+        "x": 505,
+        "y": 290
+      },
+      {
+        "id": "Z9BKVmfJphMa5B4Sbf7kP",
+        "x": 760,
+        "y": 293
+      },
+      {
+        "id": "F5OVIYE-aImtfNETslG5S",
+        "x": 759,
+        "y": 23
+      },
+      {
+        "id": "x1Zm7fwezVoWkhqFwMOck",
+        "x": 357,
+        "y": 21
+      }
+    ],
+    "closed": true
+  },
+  "HoleCorners": [
+    {
+      "corners": [
+        {
+          "id": "nY8mlGZ-jt_ZPz2aLVCnb",
+          "x": 281,
+          "y": 506
+        },
+        {
+          "id": "tMG_ywYUEmy1VKWSkjU3T",
+          "x": 280,
+          "y": 366
+        },
+        {
+          "id": "mlO62gJSRujL6nsIA-I4x",
+          "x": 720,
+          "y": 370
+        },
+        {
+          "id": "jbvW721ZVvFOYxTTxKDSl",
+          "x": 722,
+          "y": 507
+        }
+      ],
+      "closed": true
+    },
+    {
+      "corners": [
+        {
+          "id": "ZQSKfaQblBCGXasT8cx-n",
+          "x": 495,
+          "y": 571
+        },
+        {
+          "id": "mnUSJOjSY_4_d2XL4i5kv",
+          "x": 494,
+          "y": 584
+        },
+        {
+          "id": "jxu6KEfaXtjiKSa_ytZ1g",
+          "x": 600,
+          "y": 585
+        },
+        {
+          "id": "aZfcExVDdwHBiH-tyFSso",
+          "x": 600,
+          "y": 570
+        }
+      ],
+      "closed": true
+    }
+  ]
+}

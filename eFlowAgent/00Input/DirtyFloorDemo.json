@@ -1,0 +1,211 @@
+{
+  "name": "default",
+  "Scenario": {
+    "charLength": 13,
+    "charDensity": 8,
+    "charVelocity": 1.34,
+    "startPersons": 80,
+    "randPersons": 1,
+    "maxTime": 100
+  },
+  "Fundamentaldiagramm": 5,
+  "Infection": {
+    "percentInfected": 0.05,
+    "criticalDistance": 0.5,
+    "infectionRate": 65,
+    "percentRemoved": 0.1,
+    "resistanceTime": 1,
+    "moveMode": 0
+  },
+  "Measurementstations": [],
+  "Entrance": [],
+  "Exit": [
+    {
+      "wallId": "GtLshb_BWfGmuyNLUax46B-rZHotBQS6fBhltSd6YT",
+      "xr": 868.1124459644798,
+      "yr": 820.012968524852,
+      "xl": 868.8582316279231,
+      "yl": 641.0244092984497,
+      "weight": 1
+    },
+    {
+      "wallId": "GtLshb_BWfGmuyNLUax46B-rZHotBQS6fBhltSd6YT",
+      "xr": 869.8666689814413,
+      "yr": 398.99944445408937,
+      "xl": 869.1125327685284,
+      "yl": 579.9921355532022,
+      "weight": 0.8
+    }
+  ],
+  "Attractors": [],
+  "SubdomainsFD": [
+    {
+      "Name": "subdom1",
+      "Velocity": 0.6,
+      "Polygon": [
+        448,
+        842,
+        869,
+        842,
+        869,
+        610,
+        448,
+        610
+      ]
+    }
+  ],
+  "SubdomainsRhoInit": [
+    [
+      149,
+      775,
+      341,
+      775,
+      341,
+      445,
+      149,
+      445
+    ]
+  ],
+  "Refinement": {
+    "decompositionLevel": "medium",
+    "localRefinement": 0,
+    "localMarkMethod": 0,
+    "globalRefinement": 0
+  },
+  "Domainpolygon": {
+    "numberPoints": 12,
+    "segmentPoints": [
+      93,
+      846,
+      93,
+      371,
+      870,
+      367,
+      868,
+      847,
+      149,
+      430,
+      150,
+      459,
+      332,
+      461,
+      329,
+      758,
+      148,
+      756,
+      147,
+      788,
+      362,
+      790,
+      364,
+      432
+    ],
+    "numberSegments": 12,
+    "pointOrder": [
+      0,
+      1,
+      1,
+      2,
+      2,
+      3,
+      3,
+      0,
+      4,
+      5,
+      5,
+      6,
+      6,
+      7,
+      7,
+      8,
+      8,
+      9,
+      9,
+      10,
+      10,
+      11,
+      11,
+      4
+    ],
+    "numberHoles": 1,
+    "holes": [
+      {
+        "x": 294.3629447205242,
+        "y": 614.0505739038656
+      }
+    ]
+  },
+  "Grid": {},
+  "PolygonCorners": {
+    "corners": [
+      {
+        "id": "pqxjRRhOpI2zsJkCVep2O",
+        "x": 93,
+        "y": 154
+      },
+      {
+        "id": "nYOpPsizwNu1Q9regBVfu",
+        "x": 93,
+        "y": 629
+      },
+      {
+        "id": "GtLshb_BWfGmuyNLUax46",
+        "x": 870,
+        "y": 633
+      },
+      {
+        "id": "B-rZHotBQS6fBhltSd6YT",
+        "x": 868,
+        "y": 153
+      }
+    ],
+    "closed": true
+  },
+  "HoleCorners": [
+    {
+      "corners": [
+        {
+          "id": "XGOiNW9LugSTaSQy2tNzh",
+          "x": 149,
+          "y": 570
+        },
+        {
+          "id": "1Jau0Hf7zOh5IPYzldtrv",
+          "x": 150,
+          "y": 541
+        },
+        {
+          "id": "6E8MxNnW5EkGcFELMnGtl",
+          "x": 332,
+          "y": 539
+        },
+        {
+          "id": "lBpk1moH8e6mGbKKmwYez",
+          "x": 329,
+          "y": 242
+        },
+        {
+          "id": "RaoTnuemaLKVoHXyV7XI6",
+          "x": 148,
+          "y": 244
+        },
+        {
+          "id": "iL2wCLrf3W6Z3Mv_qMAB-",
+          "x": 147,
+          "y": 212
+        },
+        {
+          "id": "gUSkPwxUwCEiagAzT1QdO",
+          "x": 362,
+          "y": 210
+        },
+        {
+          "id": "jkVBSosIWk7HFiely-uP1",
+          "x": 364,
+          "y": 568
+        }
+      ],
+      "closed": true
+    }
+  ]
+}

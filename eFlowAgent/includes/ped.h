@@ -1,0 +1,69 @@
+#include <std.h>
+#include <structdef.h>
+#include <time.h>
+
+#include <agents.h>
+#include <base.h>
+#include <check.h>
+#include <fd.h>
+#include <functions.h>
+#include <graphics.h>
+#include <grid.h>
+#include <lgs.h>
+#include <test.h>
+#include <tools.h>
+#include <triangle.h>
+
+void ReadConfigFile();
+void ReadJsonParam();
+void ReadEflowParam();
+void ParamInit(REAL *);
+int  ReadFDData(char *, REAL );  // ped_fd
+void WriteEflowFile(char *);
+
+void FuncInit(REAL *v, REAL *vel[2], REAL *rho, REAL *unu);
+void RhoInit(REAL *);
+
+REAL DoorLength(int , REAL *[4], int );
+void Entree(REAL *, REAL );
+int ChkWall(int );
+int ChkEntree(int );
+int ChkExit(int );
+int ChkExitPoint(REAL , REAL );
+int ChkEntreePoint(REAL , REAL );
+void PED_Eikonal_bound2vec(REAL , REAL *, int );
+void PED_Helm_bound2vec(REAL , REAL *, int );
+void PED_Kont_bound2vec(REAL , REAL *, int );
+void PED_Helm_EmptyRoom_bound2vec(REAL , REAL *, int );
+
+
+
+int fps_check(int ,REAL , REAL );
+int PED_exit(int );
+int PED_entree(int );
+
+
+REAL TotalMass(REAL *, REAL *);
+void ped_monitoring(REAL *, REAL *[2], REAL *, int );
+void monitoring(REAL *, REAL *[2], REAL *, int );
+
+
+void PED_tests();
+
+void FD_Vec(REAL *, REAL *, int );
+REAL FD_Value(REAL , int , REAL , REAL , int );
+REAL fd_weidmann_linear(REAL *[2], int , REAL );
+
+
+void NullBound(REAL *,REAL ,int );
+void EinsBound(REAL *,REAL ,int );
+void NullEinsBound(REAL *,REAL ,int );
+
+
+REAL CurrentDensity(REAL [4], REAL , int );
+
+
+void FreeParam();
+REAL DistPointdOmega(REAL x, REAL y,int *kk, int *ll);
+
+

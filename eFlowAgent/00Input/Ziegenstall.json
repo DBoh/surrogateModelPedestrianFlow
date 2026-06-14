@@ -1,0 +1,105 @@
+{
+  "name": "default",
+  "Scenario": {
+    "charLength": 17,
+    "charDensity": 8,
+    "charVelocity": 1.34,
+    "startPersons": 100,
+    "randPersons": 0,
+    "maxTime": 200
+  },
+  "Fundamentaldiagramm": 5,
+  "Infection": {
+    "percentInfected": 0.05,
+    "criticalDistance": 0.5,
+    "infectionRate": 65,
+    "percentRemoved": 0.1,
+    "resistanceTime": 1,
+    "moveMode": 0
+  },
+  "Measurementstations": [],
+  "Entrance": [],
+  "Exit": [
+    {
+      "wallId": "dRcOIXYrkd2_QYm1ZHfj1AXwj0fgdSr6UtW8-LTw-m",
+      "xr": 185.14854006895095,
+      "yr": 431.9996059945121,
+      "xl": 185.77187785829875,
+      "yl": 666.9979525786252,
+      "weight": 1
+    }
+  ],
+  "Attractors": [],
+  "SubdomainsFD": [],
+  "SubdomainsRhoInit": [
+    [
+      501,
+      858,
+      956,
+      858,
+      956,
+      257,
+      501,
+      257
+    ]
+  ],
+  "Refinement": {
+    "decompositionLevel": "medium",
+    "localRefinement": 0,
+    "localMarkMethod": 0,
+    "globalRefinement": 0
+  },
+  "Domainpolygon": {
+    "numberPoints": 4,
+    "segmentPoints": [
+      186,
+      753,
+      185,
+      376,
+      891,
+      374,
+      891,
+      758
+    ],
+    "numberSegments": 4,
+    "pointOrder": [
+      0,
+      1,
+      1,
+      2,
+      2,
+      3,
+      3,
+      0
+    ],
+    "numberHoles": 0,
+    "holes": []
+  },
+  "Grid": {},
+  "PolygonCorners": {
+    "corners": [
+      {
+        "id": "dRcOIXYrkd2_QYm1ZHfj1",
+        "x": 186,
+        "y": 247
+      },
+      {
+        "id": "AXwj0fgdSr6UtW8-LTw-m",
+        "x": 185,
+        "y": 624
+      },
+      {
+        "id": "hlg-fW_n4sk_FrSqWIQpI",
+        "x": 891,
+        "y": 626
+      },
+      {
+        "id": "-YYnz6Ci_irKdGCyHl8kB",
+        "x": 891,
+        "y": 242
+      }
+    ],
+    "closed": true
+  },
+  "HoleCorners": []
+}

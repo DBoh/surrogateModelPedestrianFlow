@@ -1,0 +1,115 @@
+/*!
+  \file matrix_functions.c
+  \brief functions for matrix operations
+*/
+
+#include <ped.h>
+
+extern SOLV solver;
+extern int NK, *nach;
+extern GN *node;
+
+
+/*!
+  \brief Matrix-Vector Multiplication
+
+  \f[A\,x=y\f]
+*/
+void amul(REAL *A, REAL *x, REAL *y)
+{
+  int i, k;
+
+  for(i=0 ; i<NK ; i++){
+    y[i] = A[node[i].pointmat]*x[i];
+
+    for(k=node[i].pointmat+1 ; k<node[i+1].pointmat ; k++){
+      y[i] += A[k]*x[nach[k]];
+    }
+  }
+
+}
+
+void amul_bd_exit(REAL *A, REAL *x, REAL *y)
+{
+  int i, k;
+  REAL fac=1.;
+
+  for(i=0 ; i<NK ; i++){
+    if(node[i].id<0 && ChkExit(i)){
+      y[i] = x[i];
+    } else {
+      y[i] = A[node[i].pointmat]*x[i];
+
+      for(k=node[i].pointmat+1 ; k<node[i+1].pointmat ; k++)
+	y[i] += A[k]*x[nach[k]];
+    }
+  }
+
+}
+
+
+void amul_bd_entree(REAL *A, REAL *x, REAL *y)
+{
+  int i, k;
+  REAL fac=1.;
+
+  for(i=0 ; i<NK ; i++){
+    if(node[i].id<0 && ChkEntree(i)){
+      y[i] = x[i];
+    } else {
+      y[i] = A[node[i].pointmat]*x[i];
+
+      for(k=node[i].pointmat+1 ; k<node[i+1].pointmat ; k++)
+	y[i] += A[k]*x[nach[k]];
+    }
+  }
+
+}
+
+
+
+void amul_bd_entree_exit(REAL *A, REAL *x, REAL *y)
+{
+  int i, k;
+  REAL fac=1.;
+
+  for(i=0 ; i<NK ; i++){
+    if(node[i].id<0 && (ChkEntree(i) || ChkExit(i))){
+      y[i] = x[i];
+    } else {
+      y[i] = A[node[i].pointmat]*x[i];
+
+      for(k=node[i].pointmat+1 ; k<node[i+1].pointmat ; k++)
+	y[i] += A[k]*x[nach[k]];
+    }
+  }
+
+}
+
+
+void amul_EOC(REAL *A, REAL *x, REAL *y)
+{
+  int i, k;
+
+#if EOC
+  for(i=0 ; i<NK ; i++){
+    if(fabs(y-0.5)<EpsZero){
+      y[i] = x[i];
+    } else {
+      y[i] = A[node[i].pointmat]*x[i];
+
+      for(k=node[i].pointmat+1 ; k<node[i+1].pointmat ; k++)
+	y[i] += A[k]*x[nach[k]];
+    }
+  }
+#else
+  amul(A,x,y);
+#endif
+  
+}
+
+
+
+
+
+

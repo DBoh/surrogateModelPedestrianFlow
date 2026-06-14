@@ -1,0 +1,602 @@
+#include <ped.h>
+
+extern Basis phi;
+extern GE *tri;
+extern TRI refine;
+extern int NT, NK, bandwidth, *nach;
+extern REAL *XY;
+extern Basis phi;
+extern REAL EPS, GridEpsZero;
+extern GN *node;
+extern DAT PED;
+
+void triang_T(int );
+void triang_T2(int );
+void MarkGrid(int );
+void TriangGrid();
+void NodeNeighbours(void (*)());
+void TriangConnec();
+
+
+void RefineGrid(void (*bf)())
+{
+  REAL h;
+  int lo;
+
+  if(refine.lg+refine.ll>0){
+    for(lo=0 ; lo<refine.lg ; lo++){
+      MarkGrid(0);
+      TriangGrid();
+    }
+    for(lo=0 ; lo<refine.ll ; lo++){
+      MarkGrid(refine.mode);
+      TriangGrid();
+    }
+  }
+
+  /*
+  for(lo=0 ; lo<4 ; lo++)
+    {
+      MarkGrid(2);
+      TriangGrid();
+    }
+  */
+  
+#if PLOT
+  octavegridplot();
+#endif
+
+  NodeNeighbours(bf);               // Knotennachbarn fuer Matrizen
+  TriangConnec();                   // Gittereigenschaften
+  PED_bound();
+  DomainBoundaryGrid();             // Abstandhalter der Tracks zur Wand
+
+#if MSG
+  char msg[100];
+  sprintf(msg,"NK = %d\nNT = %d\nGitterweite: h = %f",NK,NT,refine.gridwidth);
+  WriteLog(msg,"a");
+#endif
+  
+  
+}
+
+void TriangGrid()
+{
+  int k1, NTT;
+
+  NTT = NT;
+  for(k1=0 ; k1<NTT ; k1++){
+    if(tri[k1].mark==1){
+      if(phi.DEG==1) triang_T(k1);
+      if(phi.DEG==2) triang_T2(k1);
+    }
+  }
+
+}
+
+
+void triang_T(int k1)
+{
+  int k2, k3, k4, i, ii, j, jj, g1, g2, n2, n3, n4;
+  int jn2, jn3, jn4, kk2;
+
+  ii = tri[k1].RE;
+  g1 = tri[k1].VNR[(ii+1)%3];
+  g2 = tri[k1].VNR[(ii+2)%3];
+  k2 = tri[k1].NEIGH[ii];
+  kk2 = k2;
+
+  jj = -1;
+  if(k2>-1) {
+    jj = tri[k2].NEIGH[tri[k2].RE];
+    if(jj!=k1){
+      triang_T(k2);
+      k2 = tri[k1].NEIGH[ii];
+      kk2 = k2;
+    }
+  }
+
+  //======================== Patch verfeinern ==========================
+  if(k2>=0){
+
+    for(j=0 ; j<3 ; j++){
+      if(tri[k2].NEIGH[j]==k1)
+  jj = j;
+    }
+
+    k3 = NT;
+    k4 = NT+1;
+
+    // Neuer Knoten
+    // XV um zwei Werte erweitern:
+
+    XY = realloc(XY,(2*NK+3)*sizeof(REAL));
+
+    XY[2*NK] = 0.5*(XY[2*g1]+XY[2*g2]);
+    XY[2*NK+1] = 0.5*(XY[2*g1+1]+XY[2*g2+1]);
+
+    // Neue Dreiecke
+    tri = realloc(tri,(NT+2)*sizeof(GE));
+
+    tri[k1].mark = 0;
+    tri[k2].mark = 0;
+    tri[k3].mark = 1;
+    tri[k4].mark = 1;
+
+    tri[k1].RE = (ii+2)%3;
+    tri[k2].RE = (jj+2)%3;
+    tri[k3].RE = (ii+1)%3;
+    tri[k4].RE = (jj+1)%3;
+
+    tri[k1].VNR[(ii+2)%3] = NK;
+    tri[k2].VNR[(jj+2)%3] = NK;
+
+    tri[k3].VNR[ii] = tri[k1].VNR[ii];
+    tri[k3].VNR[(ii+1)%3] = NK;
+    tri[k3].VNR[(ii+2)%3] = tri[k2].VNR[(jj+1)%3];
+
+    tri[k4].VNR[jj] = tri[k2].VNR[jj];
+    tri[k4].VNR[(jj+1)%3] = NK;
+    tri[k4].VNR[(jj+2)%3] = tri[k1].VNR[(ii+1)%3];
+
+    n3 = tri[k1].NEIGH[(ii+1)%3];
+    if(n3>=0){
+      for(i=0 ; i<3 ; i++){
+  if(tri[n3].NEIGH[i]==k1){
+    jn3 = i;
+    break;
+  }
+      }
+    }
+    n4 = tri[k2].NEIGH[(jj+1)%3];
+    if(n4>=0){
+      for(i=0 ; i<3 ; i++){
+  if(tri[n4].NEIGH[i]==k2){
+    jn4 = i;
+    break;
+  }
+      }
+    }
+
+    tri[k1].NEIGH[ii] = k4;
+    tri[k1].NEIGH[(ii+1)%3] = k3;
+
+    tri[k2].NEIGH[jj] = k3;
+    tri[k2].NEIGH[(jj+1)%3] = k4;
+
+    tri[k3].NEIGH[ii] = k2;
+    tri[k3].NEIGH[(ii+1)%3] = n3;
+    tri[k3].NEIGH[(ii+2)%3] = k1;
+
+    tri[k4].NEIGH[jj] = k1;
+    tri[k4].NEIGH[(jj+1)%3] = n4;
+    tri[k4].NEIGH[(jj+2)%3] = k2;
+
+    if(n3>=0) tri[n3].NEIGH[jn3] = k3;
+    if(n4>=0) tri[n4].NEIGH[jn4] = k4;
+
+    NK ++;
+    NT += 2;
+
+    //======================== Randdreieck verfeinern ====================
+  } else {
+
+    k2 = NT;
+    // Neuer Knoten
+    // XV um zwei Werte erweitern:
+
+    XY = realloc(XY,(2*NK+3)*sizeof(REAL));
+
+    XY[2*NK] = 0.5*(XY[2*g1]+XY[2*g2]);
+    XY[2*NK+1] = 0.5*(XY[2*g1+1]+XY[2*g2+1]);
+
+    // Neue Dreiecke
+    tri = realloc(tri,(NT+1)*sizeof(GE));
+
+    tri[k1].mark = 0;
+    tri[k2].mark = 0;
+
+    tri[k1].RE = (ii+2)%3;
+    tri[k2].RE = (ii+1)%3;
+
+    tri[k2].VNR[(ii+2)%3] = tri[k1].VNR[(ii+2)%3];
+    tri[k2].VNR[(ii+1)%3] = NK;
+    tri[k2].VNR[ii] = tri[k1].VNR[ii];
+
+    tri[k1].VNR[(ii+2)%3] = NK;
+
+    n2 = tri[k1].NEIGH[(ii+1)%3];
+    if(n2>=0){
+      for(i=0 ; i<3 ; i++){
+  if(tri[n2].NEIGH[i]==k1){
+    jn2 = i;
+    break;
+  }
+      }
+    }
+
+    tri[k1].NEIGH[(ii+1)%3] = k2;
+    tri[k2].NEIGH[ii] = tri[k1].NEIGH[ii];
+    tri[k2].NEIGH[(ii+1)%3] = n2;
+    tri[k2].NEIGH[(ii+2)%3] = k1;
+
+    if(n2>=0) tri[n2].NEIGH[jn2] = k2;
+
+    NK ++;
+    NT += 1;
+
+
+  }
+
+}
+
+
+void triang_T2(int k1)
+{
+  int k2, k3, k4, i, ii, j, jj, g1, g2, g3, g4, g5, n2, n3, n4;
+  int jn2, jn3, jn4, kk2;
+
+  ii = tri[k1].RE;
+
+  g1 = tri[k1].VNR[(ii+1)%3];
+  g2 = tri[k1].VNR[(ii+2)%3];
+  g3 = tri[k1].VNR[ii];
+  g4 = tri[k1].VNR[(ii+1)%3+3];
+
+  k2 = tri[k1].NEIGH[ii];
+  kk2 = k2;
+
+  jj = -1;
+  if(k2>-1) {
+    jj = tri[k2].NEIGH[tri[k2].RE];
+    if(jj!=k1){
+      triang_T2(k2);
+      k2 = tri[k1].NEIGH[ii];
+      kk2 = k2;
+    }
+  }
+
+  //======================== Patch verfeinern ==========================
+  if(k2>=0){
+
+    for(j=0 ; j<3 ; j++){
+      if(tri[k2].NEIGH[j]==k1)
+  jj = j;
+    }
+
+    g5 = tri[k2].VNR[jj];
+
+    k3 = NT;
+    k4 = NT+1;
+
+    // Neuer Knoten
+    // XV um zwei Werte erweitern:
+
+    XY = realloc(XY,(2*NK+8)*sizeof(REAL));
+
+    XY[2*NK] = 0.5*(XY[2*g3]+XY[2*g4]);
+    XY[2*NK+1] = 0.5*(XY[2*g3+1]+XY[2*g4+1]);
+
+    XY[2*(NK+1)] = 0.5*(XY[2*g4]+XY[2*g2]);
+    XY[2*(NK+1)+1] = 0.5*(XY[2*g4+1]+XY[2*g2+1]);
+
+    XY[2*(NK+2)] = 0.5*(XY[2*g4]+XY[2*g5]);
+    XY[2*(NK+2)+1] = 0.5*(XY[2*g4+1]+XY[2*g5+1]);
+
+    XY[2*(NK+3)] = 0.5*(XY[2*g1]+XY[2*g4]);
+    XY[2*(NK+3)+1] = 0.5*(XY[2*g1+1]+XY[2*g4+1]);
+
+    // Neue Dreiecke
+    tri = realloc(tri,(NT+2)*sizeof(GE));
+
+    tri[k1].mark = 0;
+    tri[k2].mark = 0;
+    tri[k3].mark = 1;
+    tri[k4].mark = 1;
+
+    tri[k1].RE = (ii+2)%3;
+    tri[k2].RE = (jj+2)%3;
+    tri[k3].RE = (ii+1)%3;
+    tri[k4].RE = (jj+1)%3;
+
+    tri[k3].VNR[(ii+2)%3+3] = tri[k1].VNR[(ii+2)%3+3];
+    tri[k4].VNR[(jj+2)%3+3] = tri[k2].VNR[(jj+2)%3+3];
+
+    tri[k1].VNR[(ii+2)%3] = g4;
+    tri[k1].VNR[(ii+2)%3+3] = NK;
+    tri[k1].VNR[(ii+1)%3+3] = NK+3;
+
+    tri[k2].VNR[(jj+1)%3+3] = NK+1;
+    tri[k2].VNR[(jj+2)%3] = g4;
+    tri[k2].VNR[(jj+2)%3+3] = NK+2;
+
+    tri[k3].VNR[ii] = tri[k1].VNR[ii];
+    tri[k3].VNR[ii+3] = NK;
+    tri[k3].VNR[(ii+1)%3] = g4;
+    tri[k3].VNR[(ii+1)%3+3] = NK+1;
+    tri[k3].VNR[(ii+2)%3] = g2;
+
+    tri[k4].VNR[jj] = tri[k2].VNR[jj];
+    tri[k4].VNR[jj+3] = NK+2;
+    tri[k4].VNR[(jj+1)%3] = g4;
+    tri[k4].VNR[(jj+1)%3+3] = NK+3;
+    tri[k4].VNR[(jj+2)%3] = g1;
+
+    n3 = tri[k1].NEIGH[(ii+1)%3];
+    if(n3>=0){
+      for(i=0 ; i<3 ; i++){
+  if(tri[n3].NEIGH[i]==k1){
+    jn3 = i;
+    break;
+  }
+      }
+    }
+    n4 = tri[k2].NEIGH[(jj+1)%3];
+    if(n4>=0){
+      for(i=0 ; i<3 ; i++){
+  if(tri[n4].NEIGH[i]==k2){
+    jn4 = i;
+    break;
+  }
+      }
+    }
+
+    tri[k1].NEIGH[ii] = k4;
+    tri[k1].NEIGH[(ii+1)%3] = k3;
+
+    tri[k2].NEIGH[jj] = k3;
+    tri[k2].NEIGH[(jj+1)%3] = k4;
+
+    tri[k3].NEIGH[ii] = k2;
+    tri[k3].NEIGH[(ii+1)%3] = n3;
+    tri[k3].NEIGH[(ii+2)%3] = k1;
+
+    tri[k4].NEIGH[jj] = k1;
+    tri[k4].NEIGH[(jj+1)%3] = n4;
+    tri[k4].NEIGH[(jj+2)%3] = k2;
+
+    if(n3>=0) tri[n3].NEIGH[jn3] = k3;
+    if(n4>=0) tri[n4].NEIGH[jn4] = k4;
+
+    NK += 4;
+    NT += 2;
+
+    //======================== Randdreieck verfeinern ====================
+  } else {
+
+    k2 = NT;
+    // Neuer Knoten
+    // XV um sechs Werte erweitern:
+
+    XY = realloc(XY,(2*NK+6)*sizeof(REAL));
+
+    XY[2*NK] = 0.5*(XY[2*g4]+XY[2*g2]);
+    XY[2*NK+1] = 0.5*(XY[2*g4+1]+XY[2*g2+1]);
+    XY[2*(NK+1)] = 0.5*(XY[2*g4]+XY[2*g3]);
+    XY[2*(NK+1)+1] = 0.5*(XY[2*g4+1]+XY[2*g3+1]);
+    XY[2*(NK+2)] = 0.5*(XY[2*g4]+XY[2*g1]);
+    XY[2*(NK+2)+1] = 0.5*(XY[2*g4+1]+XY[2*g1+1]);
+
+    // Neue Dreiecke
+    tri = realloc(tri,(NT+1)*sizeof(GE));
+
+    tri[k1].mark = 0;
+    tri[k2].mark = 0;
+
+    tri[k1].RE = (ii+2)%3;
+    tri[k2].RE = (ii+1)%3;
+
+
+    tri[k2].VNR[ii] = tri[k1].VNR[ii];
+    tri[k2].VNR[ii+3] = NK+1;
+    tri[k2].VNR[(ii+1)%3] = g4;
+    tri[k2].VNR[(ii+1)%3+3] = NK;
+    tri[k2].VNR[(ii+2)%3] = g2;
+    tri[k2].VNR[(ii+2)%3+3] = tri[k1].VNR[(ii+2)%3+3];
+
+    tri[k1].VNR[(ii+1)%3+3] = NK+2;
+    tri[k1].VNR[(ii+2)%3] = g4;
+    tri[k1].VNR[(ii+2)%3+3] = NK+1;
+
+    n2 = tri[k1].NEIGH[(ii+1)%3];
+    if(n2>=0){
+      for(i=0 ; i<3 ; i++){
+  if(tri[n2].NEIGH[i]==k1){
+    jn2 = i;
+    break;
+  }
+      }
+    }
+
+    tri[k1].NEIGH[(ii+1)%3] = k2;
+    tri[k2].NEIGH[ii] = tri[k1].NEIGH[ii];
+    tri[k2].NEIGH[(ii+1)%3] = n2;
+    tri[k2].NEIGH[(ii+2)%3] = k1;
+
+    if(n2>=0) tri[n2].NEIGH[jn2] = k2;
+
+    NK += 3;
+    NT += 1;
+
+
+  }
+
+}
+
+
+/*
+   0: mark all triangles
+   1: mark boundary triangles
+   2: other strategies (work in progress)
+ */
+void MarkGrid(int flag)
+{
+  int i, k, ii, l, ll;
+  REAL xx, yy, dist;
+  int markall, k1, k2;
+  
+  for(i=0 ; i<NT ; i++)
+    tri[i].mark = 0;
+
+  switch (flag){
+
+  case 0:
+    for(i=0 ; i<NT ; i++)
+      tri[i].mark = 1;
+    break;
+  case 1:
+    for(k=0 ; k<NT ; k++){
+      for(i=0 ; i<3 ; i++){
+	if(tri[k].NEIGH[i]<0)
+	  tri[k].mark = 1;
+      }
+    }
+    break;
+  case 2:
+    markall=0;
+    for(k=0 ; k<NT ; k++)
+      {
+	for(l=0 ; l<3 ; l++)
+	  {
+	    if(tri[k].NEIGH[l]<0)
+	      {
+		k1 = tri[k].NEIGH[(l+1)%3];
+		if(k1>=0)
+		  {
+		    for(ll=0 ; ll<3 ; ll++)
+		      if(tri[k1].NEIGH[ll]<0)
+			{
+			  markall = 1;
+			  break;
+			}
+		  }
+		k2 = tri[k].NEIGH[(l+2)%3];
+		if(k2>=0)
+		  {
+		    for(ll=0 ; ll<3 ; ll++)
+		      if(tri[k2].NEIGH[ll]<0)
+			{
+			  markall = 1;
+			  break;
+			}
+		  }
+	      }
+	  }
+      }
+    if(markall)
+      {
+	for(i=0 ; i<NT ; i++)
+	  tri[i].mark = 1;
+      }
+    break;
+  default:
+    for(i=0 ; i<NT ; i++)
+      tri[i].mark = 1;
+    Message("unknown marking method; vote for all",'.',"MarkGrid");
+    break;
+  }
+
+
+}
+
+
+void NodeNeighbours(void (*bf)())
+{
+  int count;
+  int i, j, k, i_loc, l, ll, i_glob;
+  int knext, kn, knach;
+
+  node = (GN *)malloc( (NK+1) * sizeof(GN));
+  nach = (int *)calloc(NK*bandwidth , sizeof(int));
+
+  for(i=0 ; i<=NK ; i++){
+    node[i].NEIGH_NODE = (int *)calloc( bandwidth , sizeof(int));
+    node[i].NEIGH_TRI  = (int *)calloc( bandwidth , sizeof(int));
+  }
+
+
+  for(i=0 ; i<NK ; i++){
+    node[i].NEIGH_TRI[0]=0;
+    count=0;
+    for(k=0 ; k<NT ; k++){
+      l=0;
+      kn=0;
+      while(l<3 && kn==0){
+	i_glob = tri[k].VNR[l];
+
+	if(i_glob==i){
+	  kn=1;
+	  count++;
+	  node[i].NEIGH_TRI[count]=k;
+	  node[i].NEIGH_TRI[0]=count;
+	}
+	l++;
+
+      }// end while
+    }
+  }
+
+
+
+  node[0].pointmat = 0;
+  for(i=0 ; i<NK ; i++){
+    node[i].NEIGH_NODE[0]=0;
+    kn = node[i].NEIGH_TRI[0];
+    count=0;
+
+    for(j=1 ; j<=kn ; j++){
+      knext = node[i].NEIGH_TRI[j];
+      l=0;
+      for(l=0 ; l<3 ; l++){
+	i_glob = tri[knext].VNR[l];
+	if(i==i_glob){
+	  count++;
+	  node[i].NEIGH_NODE[count] = tri[knext].VNR[(l+1)%3];
+	  node[i].NEIGH_NODE[0]++;
+	  
+	  knach = tri[knext].NEIGH[(l+1)%3];
+	  if(knach<0){
+	    count++;
+	    node[i].NEIGH_NODE[count] = tri[knext].VNR[(l+2)%3];
+	    node[i].NEIGH_NODE[0]++;
+	  }
+	}
+      }
+    }
+    if(i>0)
+      node[i].pointmat = node[i-1].pointmat+node[i-1].NEIGH_NODE[0]+1;
+  }
+
+
+  node[NK].pointmat = node[NK-1].pointmat+node[NK-1].NEIGH_NODE[0]+1;
+
+  nach[0]=0;
+  for(i=0 ; i<NK ; i++){
+    count=1;
+    for(l=node[i].pointmat+1 ; l<node[i+1].pointmat ; l++){
+      nach[l]=node[i].NEIGH_NODE[count];
+      count++;
+    }
+  }
+
+  for(j=0 ; j<NK ; j++)
+    node[j].id = j;
+
+
+  bf();
+
+
+
+}
+
+
+void TriangConnec()
+{
+  REAL gmm[2];
+  GridwidthMinMax(gmm);
+
+  refine.gridwidth = gridwidth();
+  refine.gridmin = gmm[0];
+  refine.gridmax = gmm[1];
+  GridEpsZero = 1.e-01*refine.gridwidth*refine.gridwidth;
+}

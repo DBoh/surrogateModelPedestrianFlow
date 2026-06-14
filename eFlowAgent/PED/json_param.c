@@ -1,0 +1,1244 @@
+/*!
+  \file ped_param.c
+  \brief initals of the model
+*/
+#include <ped.h>
+
+extern REAL EPS, *XY, EpsZero;
+extern int NK, NT;
+extern TRI refine;
+extern VIDEO video;
+extern SUBDOM SDCV, RhoIni;
+extern SIRagent siragent;
+extern SOLV     solver;
+extern System   lgs;
+extern DAT      PED;
+extern INFOS    msg;
+extern GE       *tri;
+extern POLY     DomainPoly;
+extern Monitoring MONI;
+
+
+const char LeftParanthesis[]="{";
+const char RightParanthesis[]="}";
+const char DoubleQuote[]="\"";
+const char Comma[]=",";
+const char NewLine[]="\n";
+const char Space[]=" ";
+const char OpenParanthesis[]="[";
+const char CloseParanthesis[]="]";
+const char rough[]="rough";
+const char medium[]="medium";
+const char fine[]="bloody";
+
+void ReadRefinementParam(FILE *fp);
+int Wortabfrage(char *Wort, char Woerter[][100], int N);
+void ReadString(FILE *fp, char *name);
+REAL ReadFloatNumber(FILE *fp);
+int ReadIntNumber(FILE *fp);
+int EmptyList(FILE *fp);
+int ReadSegmentP3(FILE *fp, REAL *xr, REAL *yr, REAL *xl, REAL *yl, REAL *p1, char *p1name,
+		  REAL *p2, char *p2name, REAL *p3, char *p3name, int numParam);
+int ReadList(FILE *fp, int *numSDrhoKoord);
+int ReadPolygonParam(FILE *fp);
+int ReadGridParam(FILE *fp);
+int ReadHoles(FILE *fp, REAL *x, REAL *y);
+int ReadFDList(FILE *fp, int *listlength, REAL *vel);
+
+REAL *NumList;
+
+void ReadJsonParam()
+{
+
+  int l, ll, i, id, count=0, Entrance=0, Exit=0, plist;
+  int leseWort=0, zeichen=-1, numWoerter=22;
+
+  int numSDrho, numSDfd, numSDrhoKoord, numSDfdKoord;
+  REAL fdvel, xr, yr, xl, yl, pP, mP, weight, p1, p2, p3, ra, str, fr;
+
+  char bla[]=" ", blac, Zeichen[100];
+  char Wort[100], Woerter[numWoerter][100], linebuf[100];
+  FILE *fp, *fpo;
+
+  sprintf(Woerter[0],"charLength");
+  sprintf(Woerter[1],"charDensity");
+  sprintf(Woerter[2],"charVelocity");
+  sprintf(Woerter[3],"startPersons");
+  sprintf(Woerter[4],"randPersons");
+  sprintf(Woerter[5],"maxTime");
+  sprintf(Woerter[6],"Fundamentaldiagramm");
+  sprintf(Woerter[7],"percentInfected");
+  sprintf(Woerter[8],"criticalDistance");
+  sprintf(Woerter[9],"infectionRate");
+  sprintf(Woerter[10],"resistanceTime");
+  sprintf(Woerter[11],"percentRemoved");
+  sprintf(Woerter[12],"moveMode");
+  sprintf(Woerter[13],"Entrance");
+  sprintf(Woerter[14],"Exit");
+  sprintf(Woerter[15],"Measurementstations");
+  sprintf(Woerter[16],"Attractors");
+  sprintf(Woerter[17],"SubdomainsRhoInit");
+  sprintf(Woerter[18],"SubdomainsFD");
+  sprintf(Woerter[19],"Domainpolygon");
+  sprintf(Woerter[20],"Grid");
+  sprintf(Woerter[21],"Refinement");
+
+  fp = fopen(PED.ConfigFile, "r");
+  if(!fp)
+    printf("Can't open file %s\n","00Input/TestRoom.json");
+
+  while(count<numWoerter) {
+    blac = fgetc(fp);
+    sprintf(bla,"%c",blac);
+
+    if(!strcmp(bla,DoubleQuote)){
+      leseWort = (leseWort+1)%2;
+
+      if(!leseWort){
+
+	id = Wortabfrage(Wort,Woerter,numWoerter);
+	switch (id)
+	  {
+	  case 0: PED.CL = ReadFloatNumber(fp); count++; break;
+	  case 1: PED.CP = ReadFloatNumber(fp); count++; break;
+	  case 2: PED.CV = ReadFloatNumber(fp); count++; break;
+	  case 3: PED.Pinit = ReadIntNumber(fp); count++; break;
+	  case 4: PED.Prand = ReadIntNumber(fp); count++; break;
+	  case 5: PED.MaxTime = ReadFloatNumber(fp); count++; break;
+	  case 6: PED.FD = ReadIntNumber(fp); count++; break;
+	  case 7: siragent.PI = ReadFloatNumber(fp); count++; break;
+	  case 8: siragent.CD = ReadFloatNumber(fp); count++; break;
+	  case 9: siragent.IR = ReadFloatNumber(fp); count++; break;
+	  case 10: siragent.RT = ReadFloatNumber(fp); count++; break;
+	  case 11: siragent.PR = ReadFloatNumber(fp); count++; break;
+	  case 12: video.MoveMode = ReadIntNumber(fp); count++; break;
+	  case 13:
+	    count++;
+	    plist=1;
+	    PED.numentree=0;
+	    if(EmptyList(fp))
+	      plist=0;
+
+	    for(l=0 ; l<4 ; l++)
+	      PED.entree[l] = (REAL *)calloc(1 , sizeof(REAL ));
+
+	    PED.EntreePersons = (REAL *)calloc(1 , sizeof(REAL ));
+	    PED.MaxEntreePersons = (REAL *)calloc(1 , sizeof(REAL ));
+
+	    while(plist)
+	      {
+		plist = ReadSegmentP3(fp,&xr,&yr,&xl,&yl,&pP,"personPerSecond",&mP,"maxPersons",&p3,"xxx",6);
+
+		PED.numentree++;
+
+		for(l=0 ; l<4 ; l++)
+		  PED.entree[l] = (REAL *)realloc(PED.entree[l],PED.numentree * sizeof(REAL ));
+
+		PED.EntreePersons = (REAL *)realloc(PED.EntreePersons,PED.numentree * sizeof(REAL ));
+		PED.MaxEntreePersons = (REAL *)realloc(PED.MaxEntreePersons,PED.numentree * sizeof(REAL ));
+
+		PED.entree[0][PED.numentree-1] = xr;
+		PED.entree[1][PED.numentree-1] = yr;
+		PED.entree[2][PED.numentree-1] = xl;
+		PED.entree[3][PED.numentree-1] = yl;
+
+		PED.EntreePersons[PED.numentree-1] = pP;
+		PED.MaxEntreePersons[PED.numentree-1] = mP;
+
+
+	      }
+
+	    if(PED.numentree)
+	      {
+		PED.pFlowDoor = (REAL *)calloc(PED.numentree , sizeof(REAL ));
+		PED.DensityDoor = (REAL *)calloc(PED.numentree , sizeof(REAL ));
+		PED.MaxTimeDoor = (REAL *)calloc(PED.numentree , sizeof(REAL ));
+	      }
+	    break;
+	  case 14:
+	    count++;
+	    plist=1;
+	    PED.numexit = 0;
+
+	    for (l = 0; l < 4; l++)
+	      PED.exit[l] = (REAL *)calloc(1 , sizeof(REAL));
+	    PED.ExitAttraction = (REAL *)calloc(1 , sizeof(REAL));
+
+	    while(plist)
+	      {
+		plist = ReadSegmentP3(fp,&xr,&yr,&xl,&yl,&weight,"weight",&p2,"",&p3,"",5);
+		PED.numexit++;
+
+		for (l = 0; l < 4; l++)
+		  PED.exit[l] = (REAL *)realloc(PED.exit[l] , PED.numexit * sizeof(REAL));
+		PED.ExitAttraction = (REAL *)realloc(PED.ExitAttraction , PED.numexit * sizeof(REAL));
+
+		PED.exit[0][PED.numexit-1] = xr;
+		PED.exit[1][PED.numexit-1] = yr;
+		PED.exit[2][PED.numexit-1] = xl;
+		PED.exit[3][PED.numexit-1] = yl;
+
+		weight = min_REAL(1, max_REAL(0, weight));
+		PED.ExitAttraction[PED.numexit-1] = weight;
+		//		printf("***Exit %d: %f \n",PED.numexit,PED.ExitAttraction[PED.numexit-1]);
+
+	      }
+	    MONI.Exits = (REAL *)calloc(PED.numexit , sizeof(REAL ));
+	    break;
+	  case 15:
+	    count++;
+	    plist=1;
+	    PED.MS = 0;
+	    if(EmptyList(fp))
+	      plist=0;
+
+	    for(l = 0; l < 4; l++)
+	      PED.MSx[l] = (REAL *)calloc(1 , sizeof(REAL));
+
+	    while(plist)
+	      {
+		plist = ReadSegmentP3(fp,&xr,&yr,&xl,&yl,&p1,"",&p2,"",&p3,"",4);
+		PED.MS++;
+
+		for (l = 0; l < 4; l++)
+		  PED.MSx[l] = (REAL *)realloc(PED.MSx[l] , PED.MS * sizeof(REAL));
+
+		PED.MSx[0][PED.MS-1] = xr;
+		PED.MSx[1][PED.MS-1] = yr;
+		PED.MSx[2][PED.MS-1] = xl;
+		PED.MSx[3][PED.MS-1] = yl;
+
+	      }
+
+	    MONI.MS=PED.MS;
+	    MONI.MSpeople = (REAL *)calloc(MONI.MS , sizeof(REAL ));
+
+	    break;
+	  case 16:
+	    count++;
+	    plist=1;
+	    PED.AS = 0;
+	    if(EmptyList(fp))
+	      plist=0;
+
+	    for (l = 0; l < 7; l++)
+	      PED.ASx[l] = (REAL *)calloc(1 , sizeof(REAL));
+	    PED.ASphi = (REAL *)calloc(1 , sizeof(REAL));
+
+	    while(plist)
+	      {
+		plist = ReadSegmentP3(fp,&xr,&yr,&xl,&yl,&str,"strength",&ra,"range",&fr,"frequency",7);
+		PED.AS++;
+
+		for (l = 0; l < 7; l++)
+		  PED.ASx[l] = (REAL *)realloc(PED.ASx[l] , PED.AS * sizeof(REAL));
+		PED.ASphi = (REAL *)realloc(PED.ASphi , PED.AS * sizeof(REAL));
+
+		PED.ASx[0][PED.AS-1] = xr;
+		PED.ASx[1][PED.AS-1] = yr;
+		PED.ASx[2][PED.AS-1] = xl;
+		PED.ASx[3][PED.AS-1] = yl;
+		PED.ASx[4][PED.AS-1] = min_REAL(max_REAL(-1., str), 1.);
+		PED.ASx[5][PED.AS-1] = ra/PED.CL;
+		PED.ASx[6][PED.AS-1] = fr;
+
+		for (l = 0; l < PED.AS; l++)
+		  if (fabs(PED.ASx[6][PED.AS-1]) > EpsZero)
+		    PED.ASphi[PED.AS-1] = (REAL)(rand()) / RAND_MAX / PED.ASx[6][PED.AS-1];
+
+	      }
+
+	    break;
+	  case 17:
+	    count++;
+	    plist=1;
+	    RhoIni.NumSubdom = 0;
+	    if(EmptyList(fp))
+	      {
+		plist=0;
+		sprintf(refine.subdomainRhoini,"empty");
+	      }
+
+	    RhoIni.P = (POLY *)malloc(1 * sizeof(POLY));
+
+	    RhoIni.PKmax = 0;
+	    numSDrho = 0;
+	    while(plist)
+	      {
+		plist = ReadList(fp,&numSDrhoKoord);
+		RhoIni.NumSubdom++;
+
+		//		if(RhoIni.NumSubdom>1)
+		RhoIni.P = (POLY *)realloc(RhoIni.P , RhoIni.NumSubdom * sizeof(POLY));
+		RhoIni.P[RhoIni.NumSubdom-1].NumK = (int)(numSDrhoKoord/2);
+		RhoIni.P[RhoIni.NumSubdom-1].XY = (REAL *)calloc(2 * RhoIni.P[RhoIni.NumSubdom-1].NumK, sizeof(REAL));
+
+		for(i=0 ; i<2*RhoIni.P[RhoIni.NumSubdom-1].NumK ; i++)
+		  RhoIni.P[RhoIni.NumSubdom-1].XY[i] = NumList[i];
+
+		free(NumList);
+
+		if(RhoIni.PKmax < RhoIni.P[RhoIni.NumSubdom-1].NumK)
+		  RhoIni.PKmax = RhoIni.P[RhoIni.NumSubdom-1].NumK;
+	      }
+
+	    break;
+	  case 18:
+	    count++;
+	    plist=1;
+	    SDCV.NumSubdom = 0;
+	    if(EmptyList(fp))
+	      {
+		plist=0;
+		sprintf(refine.subdomainFD,"empty");
+	      }
+
+	    SDCV.P = (POLY *)malloc(1 * sizeof(POLY));
+	    PED.CVsd = (REAL *)calloc(1 , sizeof(REAL ));
+
+	    SDCV.PKmax = 0;
+	    while(plist)
+	      {
+		plist = ReadFDList(fp,&numSDfdKoord,&fdvel);
+		SDCV.NumSubdom++;
+
+		PED.CVsd = (REAL *)realloc(PED.CVsd , SDCV.NumSubdom * sizeof(REAL ));
+		PED.CVsd[SDCV.NumSubdom-1] = fdvel;
+
+		SDCV.P = (POLY *)realloc(SDCV.P , SDCV.NumSubdom * sizeof(POLY));
+		SDCV.P[SDCV.NumSubdom-1].NumK = (int)(numSDfdKoord/2);
+		SDCV.P[SDCV.NumSubdom-1].XY = (REAL *)calloc(2 * SDCV.P[SDCV.NumSubdom-1].NumK, sizeof(REAL));
+
+		if (SDCV.PKmax < SDCV.P[SDCV.NumSubdom-1].NumK)
+		  SDCV.PKmax = SDCV.P[SDCV.NumSubdom-1].NumK;
+
+		for (i = 0; i < 2*SDCV.P[SDCV.NumSubdom-1].NumK; i++)
+		  SDCV.P[SDCV.NumSubdom-1].XY[i] = NumList[i];
+
+		free(NumList);
+	      }
+
+	    break;
+	  case 19:
+	    count++;
+
+	    DomainPoly.NumK = 0;
+	    DomainPoly.NumS = 0;
+	    DomainPoly.NumH = 0;
+
+	    plist=1;
+	    if(EmptyList(fp))
+	      plist=0;
+
+	    if(plist)
+	      plist = ReadPolygonParam(fp);
+
+	    break;
+	  case 20:
+	    count++;
+	    plist=1;
+	    if(EmptyList(fp))
+	      plist=0;
+
+	    if(!DomainPoly.NumK && !plist)
+	      ErrorMessage("You realy need a grid!","ReadJsonParam");
+
+	    if(!DomainPoly.NumK && plist)
+	      plist = ReadGridParam(fp);
+
+	    break;
+	  case 21:
+	    count++;
+
+	    ReadRefinementParam(fp);
+
+	    break;
+	  default:
+	    if(count==1000) exit(0);
+	    break;
+	  }
+
+
+	zeichen=-1;
+      }
+    }
+
+    if(leseWort){
+      if(zeichen==-1) zeichen+=1;
+      else {
+
+	strcat(Wort,bla);
+
+
+      }
+    } else {
+      strcpy(Wort,"\0");
+    }
+  }
+
+  fclose(fp);
+
+}
+
+void ReadRefinementParam(FILE *fp)
+{
+  int l, ll, i, id, count=0;
+  int leseWort=0, zeichen=-1, numWoerter=4;
+
+  int numSDrho, numSDfd, numSDrhoKoord, numSDfdKoord;
+  REAL fdvel, xr, yr, xl, yl, pP, mP, weight, p1, p2, p3, ra, str, fr;
+
+  char bla[]=" ", blac, Zeichen[100];
+  char Wort[100], Woerter[numWoerter][100], linebuf[100];
+  char grname[100];
+
+
+  //  sprintf(Woerter[0],"granularity");
+  sprintf(Woerter[0],"localRefinement");
+  sprintf(Woerter[1],"localMarkMethod");
+  sprintf(Woerter[2],"globalRefinement");
+  sprintf(Woerter[3],"decompositionLevel");
+
+  while(count<numWoerter) {
+    blac = fgetc(fp);
+    sprintf(bla,"%c",blac);
+
+    if(!strcmp(bla,DoubleQuote)){
+      leseWort = (leseWort+1)%2;
+
+      if(!leseWort){
+
+	id = Wortabfrage(Wort,Woerter,numWoerter);
+
+	switch (id)
+	  {
+	    /*
+	  case 0: // granularity
+	    DomainPoly.Granu = ReadFloatNumber(fp);
+
+	    count++;
+	    strcpy(Wort,"\0");
+	    break;
+	    */
+	  case 0: // local ref
+	    refine.ll = ReadIntNumber(fp);
+
+	    /* ------------------------------- */
+	    count++;
+	    strcpy(Wort,"\0");
+	    break;
+	  case 1: // local ref
+	    refine.mode = ReadIntNumber(fp);
+
+	    /* ------------------------------- */
+	    count++;
+	    strcpy(Wort,"\0");
+	    break;
+	  case 2: // global ref
+	    refine.lg = ReadIntNumber(fp);
+
+	    /* ------------------------------- */
+	    count++;
+	    strcpy(Wort,"\0");
+	    break;
+	  case 3: // decompositionLevel
+
+	    ReadString(fp,grname);
+
+	    if(!strcmp(rough,grname))
+	      DomainPoly.Granu = 0.0005;
+	    else if(!strcmp(medium,grname))
+	      /*DomainPoly.Granu = 0.0003;*/
+	      DomainPoly.Granu = 0.0005;
+	    else if(!strcmp(fine,grname))
+	      DomainPoly.Granu = 0.0002;
+	    else
+	      ErrorMessage("Unknown decompositionLevel","ReadRefinementParam");
+
+	    /* ------------------------------- */
+	    count++;
+	    strcpy(Wort,"\0");
+	    break;
+	  default:
+	    if(count==1000) exit(0);
+	    break;
+	  }
+
+
+	zeichen=-1;
+      }
+    }
+
+    if(leseWort){
+      if(zeichen==-1) zeichen+=1;
+      else {
+
+	strcat(Wort,bla);
+
+
+      }
+    } else {
+      strcpy(Wort,"\0");
+    }
+  }
+
+}
+
+
+int ReadList(FILE *fp, int *num)
+{
+  int i, list=0, count=0;
+  REAL koord;
+  char bla[]="\0", blac, Wort[100]="\0";
+
+  NumList = (REAL *)calloc(1 , sizeof(REAL));
+
+
+  while(strcmp(bla,OpenParanthesis)) // einlesen bis [
+    {
+      blac = fgetc(fp);
+      sprintf(bla,"%c",blac);
+    }
+
+  while(strcmp(bla,CloseParanthesis)) // einlesen bis ]
+    {
+      blac = fgetc(fp);
+      sprintf(bla,"%c",blac);
+      if(strcmp(bla,Comma) && strcmp(bla,CloseParanthesis)){
+	strcat(Wort,bla);
+      } else {
+
+
+	koord = atof(Wort);
+	count++;
+
+	NumList = (REAL *)realloc(NumList,count*sizeof(REAL));
+	NumList[count-1] = koord;
+
+	strcpy(Wort,"\0");
+      }
+    }
+
+  *num = (int)(count);
+  blac = fgetc(fp);
+  sprintf(bla,"%c",blac);
+
+  if(!strcmp(bla,Comma))
+    return 1;
+  else
+    return 0;
+
+
+  return list;
+
+}
+
+
+
+
+int EmptyList(FILE *fp)
+{
+  int count=0, countmax=10;
+  char bla[]="\0", blac;
+
+  while(strcmp(bla,OpenParanthesis) && strcmp(bla,LeftParanthesis))
+    {
+      blac = fgetc(fp);
+      sprintf(bla,"%c",blac);
+      count++;
+      if(count>countmax)
+	{
+	  fseek(fp,-count,SEEK_CUR);
+	  return 0;
+	}
+    }
+
+  blac = fgetc(fp);
+  sprintf(bla,"%c",blac);
+  if(!strcmp(bla,CloseParanthesis) || !strcmp(bla,RightParanthesis))
+    return 1;
+  else
+    return 0;
+
+}
+
+
+int ReadSegmentP3(FILE *fp, REAL *xr, REAL *yr, REAL *xl, REAL *yl, REAL *p1, char *p1name,
+		  REAL *p2, char *p2name, REAL *p3, char *p3name, int numParam)
+{
+  int list=0, leseWort=0, i, zeichen=-1, numWords=7;
+  char Woerter[numWords][100], Wort[100]="\0";
+  char bla[]=" ", blac, Zeichen[100];
+
+  sprintf(Woerter[0],"xr");
+  sprintf(Woerter[1],"yr");
+  sprintf(Woerter[2],"xl");
+  sprintf(Woerter[3],"yl");
+  strcpy(Woerter[4],p1name);
+  strcpy(Woerter[5],p2name);
+  strcpy(Woerter[6],p3name);
+
+  i=0;
+  while(i<numParam) {
+
+
+    blac = fgetc(fp);
+    sprintf(bla,"%c",blac);
+
+
+
+    if(!strcmp(bla,DoubleQuote)){
+      leseWort = (leseWort+1)%2;
+
+      if(!leseWort){
+
+	    switch (Wortabfrage(Wort,Woerter,numParam))
+	      {
+	      case 0:
+		*xr = ReadFloatNumber(fp);
+		i++;
+		strcpy(Wort,"\0");
+		break;
+	      case 1:
+		*yr = ReadFloatNumber(fp);
+		i++;
+		strcpy(Wort,"\0");
+		break;
+	      case 2:
+		*xl = ReadFloatNumber(fp);
+		i++;
+		strcpy(Wort,"\0");
+		break;
+	      case 3:
+		*yl = ReadFloatNumber(fp);
+		i++;
+		strcpy(Wort,"\0");
+		break;
+	      case 4:
+		*p1 = ReadFloatNumber(fp);
+		i++;
+		strcpy(Wort,"\0");
+		break;
+	      case 5:
+		*p2 = ReadFloatNumber(fp);
+		i++;
+		strcpy(Wort,"\0");
+		break;
+	      case 6:
+		*p3 = ReadFloatNumber(fp);
+		i++;
+		strcpy(Wort,"\0");
+		break;
+	      default:
+		strcpy(Wort,"\0");
+		break;
+	      }
+
+	zeichen=-1;
+      }
+    }
+
+    if(leseWort){
+      if(zeichen==-1) zeichen+=1;
+      else {
+
+	strcat(Wort,bla);
+
+
+      }
+    } else {
+      strcpy(Wort,"\0");
+    }
+
+
+  }
+
+  while(strcmp(bla,RightParanthesis))
+    {
+      blac = fgetc(fp);
+      sprintf(bla,"%c",blac);
+    }
+
+  blac = fgetc(fp);
+  sprintf(bla,"%c",blac);
+
+  if(!strcmp(bla,Comma))
+    return 1;
+  else
+    return 0;
+
+
+  return list;
+}
+
+int ReadFDList(FILE *fp, int *listlength, REAL *vel)
+{
+  int ll, plist, list=0, leseWort=0, i, zeichen=-1, numWords=2;
+  char Woerter[numWords][100], Wort[100]="\0";
+  char bla[]=" ", blac, Zeichen[100];
+
+  sprintf(Woerter[0],"Velocity");
+  sprintf(Woerter[1],"Polygon");
+
+  i=0;
+  while(i<numWords) {
+
+
+    blac = fgetc(fp);
+    sprintf(bla,"%c",blac);
+
+
+
+    if(!strcmp(bla,DoubleQuote)){
+      leseWort = (leseWort+1)%2;
+
+      if(!leseWort){
+
+	    switch (Wortabfrage(Wort,Woerter,numWords))
+	      {
+	      case 0:
+		*vel = ReadFloatNumber(fp);
+		i++;
+		strcpy(Wort,"\0");
+		break;
+	      case 1:
+		plist = ReadList(fp,&ll);
+		*listlength = ll;
+		i++;
+		strcpy(Wort,"\0");
+		break;
+	      default:
+		strcpy(Wort,"\0");
+		break;
+	      }
+
+	zeichen=-1;
+      }
+    }
+
+    if(leseWort){
+      if(zeichen==-1) zeichen+=1;
+      else {
+
+	strcat(Wort,bla);
+
+
+      }
+    } else {
+      strcpy(Wort,"\0");
+    }
+
+
+  }
+
+  while(strcmp(bla,RightParanthesis))
+    {
+      blac = fgetc(fp);
+      sprintf(bla,"%c",blac);
+    }
+
+  blac = fgetc(fp);
+  sprintf(bla,"%c",blac);
+
+  if(!strcmp(bla,Comma))
+    return 1;
+  else
+    return 0;
+
+
+  return list;
+}
+
+
+int ReadGridParam(FILE *fp)
+{
+  int  ll, k, l, list=0, leseWort=0, i, ii, zeichen=-1, numWords=4;
+  int Tmin=1, plist, num;
+  char Woerter[numWords][100], Wort[100]="\0";
+  char bla[]=" ", blac, Zeichen[100], msg[100];
+
+  sprintf(Woerter[0],"numberKnots");
+  sprintf(Woerter[1],"numberTriangles");
+  sprintf(Woerter[2],"Triangles");
+  sprintf(Woerter[3],"Coordinates");
+
+  i=0;
+  while(i<numWords) {
+
+
+    blac = fgetc(fp);
+    sprintf(bla,"%c",blac);
+
+
+
+    if(!strcmp(bla,DoubleQuote)){
+      leseWort = (leseWort+1)%2;
+
+      if(!leseWort){
+
+	    switch (Wortabfrage(Wort,Woerter,numWords))
+	      {
+	      case 0:
+		NK = ReadIntNumber(fp);
+		i++;
+		break;
+	      case 1:
+		NT = ReadIntNumber(fp);
+		Tmin = NT;
+		i++;
+		break;
+	      case 2: // triangle
+		plist = ReadList(fp,&num);
+		i++;
+		if((int)(num/3)!=NT)
+		  {
+		    sprintf(msg,"wrong number of triangles: %d/3 = %d (NT=%d)",num,(int)(num/3),NT);
+		    ErrorMessage(msg,"ReadGrid");
+		  }
+
+		tri = (GE *)malloc(NT * sizeof(GE));
+
+		ll = 0;
+		for(k=0 ; k<NT ; k++)
+		  for(l=0 ; l<3 ; l++)
+		    {
+		      tri[k].VNR[l] = NumList[ll++];
+		      if(Tmin>tri[k].VNR[l]) Tmin = tri[k].VNR[l];
+		    }
+
+		if(Tmin)
+		  {
+		    for(k=0 ; k<NT ; k++)
+		      for(l=0 ; l<3 ; l++)
+			tri[k].VNR[l] -= Tmin;
+		  }
+		free(NumList);
+		break;
+	      case 3: // coord
+		plist = ReadList(fp,&num);
+		i++;
+		if((int)(num/2)!=NK)
+		  {
+		    sprintf(msg,"wrong number of coordinates: num = %d, NK = %d\n",num,NK);
+		    ErrorMessage(msg,"ReadGrid");
+		  }
+		XY = (REAL *)calloc(2*NK , sizeof(REAL ));
+		FieldCp(XY,1.,NumList,0.,2*NK);
+
+		free(NumList);
+		break;
+	      default:
+		strcpy(Wort,"\0");
+		break;
+	      }
+
+	zeichen=-1;
+      }
+    }
+
+    if(leseWort){
+      if(zeichen==-1) zeichen+=1;
+      else {
+
+	strcat(Wort,bla);
+
+
+      }
+    } else {
+      strcpy(Wort,"\0");
+    }
+
+
+  }
+
+  while(strcmp(bla,RightParanthesis))
+    {
+      blac = fgetc(fp);
+      sprintf(bla,"%c",blac);
+    }
+
+  blac = fgetc(fp);
+  sprintf(bla,"%c",blac);
+
+  if(!strcmp(bla,Comma))
+    return 1;
+  else
+    return 0;
+
+
+  return list;
+}
+
+int ReadPolygonParam(FILE *fp)
+{
+  REAL xh, yh;
+  int list=0, leseWort=0, l, ll, i, ii, zeichen=-1, numWords=5, plist, num;
+  char Woerter[numWords][100], Wort[100]="\0";
+  char bla[]=" ", blac, Zeichen[100], msg[100];
+
+  sprintf(Woerter[0],"numberPoints");
+  sprintf(Woerter[1],"segmentPoints");
+  sprintf(Woerter[2],"numberSegments");
+  sprintf(Woerter[3],"pointOrder");
+  sprintf(Woerter[4],"numberHoles");
+
+  i=0;
+  while(i<numWords) {
+
+
+    blac = fgetc(fp);
+    sprintf(bla,"%c",blac);
+
+
+
+    if(!strcmp(bla,DoubleQuote)){
+      leseWort = (leseWort+1)%2;
+
+      if(!leseWort){
+
+	    switch (Wortabfrage(Wort,Woerter,numWords))
+	      {
+	      case 0:
+		DomainPoly.NumK = ReadIntNumber(fp);
+		DomainPoly.XY = (REAL *)calloc(2*DomainPoly.NumK , sizeof(REAL ));
+
+		/* ------------------------------- */
+		i++;
+		strcpy(Wort,"\0");
+		break;
+	      case 1: // Pointkoord
+		plist = ReadList(fp,&num);
+
+		if(num-2*DomainPoly.NumK != 0){
+		  sprintf(msg,"Wrong Pointnumber (NumK): %d != %d",2*num,DomainPoly.NumK);
+		  ErrorMessage(msg,"ReadPolygonParam");
+		}
+
+		for(l=0 ; l<2*DomainPoly.NumK ; l++)
+		  DomainPoly.XY[l] = NumList[l];
+
+		free(NumList);
+		/* ------------------------------- */
+		i++;
+		break;
+	      case 2:
+		DomainPoly.NumS = ReadIntNumber(fp);
+		DomainPoly.SEG = (int *)calloc(2*DomainPoly.NumS , sizeof(int ));
+
+		/* ------------------------------- */
+		i++;
+		strcpy(Wort,"\0");
+		break;
+	      case 3: // Pointorder
+		plist = ReadList(fp,&num);
+
+		if(num-2*DomainPoly.NumS != 0){
+		  sprintf(msg,"Wrong Pointnumber (NumS): %d != %d",2*num,DomainPoly.NumS);
+		  ErrorMessage(msg,"ReadPolygonParam");
+		}
+
+		for(l=0 ; l<2*DomainPoly.NumS ; l++)
+		  DomainPoly.SEG[l] = (int)(NumList[l]);
+
+		free(NumList);
+		/* ------------------------------- */
+		i++;
+		break;
+	      case 4: // holes
+		DomainPoly.NumH = ReadIntNumber(fp);
+		if(DomainPoly.NumH>0)
+		  DomainPoly.HOLES = (REAL *)calloc(2*DomainPoly.NumH , sizeof(REAL ));
+
+		/* ------------------------------- */
+		i++;
+		strcpy(Wort,"\0");
+		plist = 1;
+		ll=0;
+		while(DomainPoly.NumH && plist)
+		  {
+		    plist = ReadHoles(fp,&xh,&yh);
+		    DomainPoly.HOLES[2*ll] = xh;
+		    DomainPoly.HOLES[2*ll+1] = yh;
+
+		    ll++;
+		  }
+		break;
+	      default:
+		strcpy(Wort,"\0");
+		break;
+	      }
+
+	zeichen=-1;
+      }
+    }
+
+    if(leseWort){
+      if(zeichen==-1) zeichen+=1;
+      else {
+
+	strcat(Wort,bla);
+
+
+      }
+    } else {
+      strcpy(Wort,"\0");
+    }
+
+
+  }
+
+  while(strcmp(bla,RightParanthesis))
+    {
+      blac = fgetc(fp);
+      sprintf(bla,"%c",blac);
+    }
+
+  blac = fgetc(fp);
+  sprintf(bla,"%c",blac);
+
+  if(!strcmp(bla,Comma))
+    return 1;
+  else
+    return 0;
+
+
+  return list;
+}
+
+int ReadHoles(FILE *fp, REAL *x, REAL *y)
+{
+  int list=0, leseWort=0, i, zeichen=-1, numWords=2;
+  char Woerter[numWords][100], Wort[100]="\0";
+  char bla[]=" ", blac, Zeichen[100];
+
+  sprintf(Woerter[0],"x");
+  sprintf(Woerter[1],"y");
+
+  i=0;
+  while(i<numWords) {
+
+
+    blac = fgetc(fp);
+    sprintf(bla,"%c",blac);
+
+
+
+    if(!strcmp(bla,DoubleQuote)){
+      leseWort = (leseWort+1)%2;
+
+      if(!leseWort){
+
+	    switch (Wortabfrage(Wort,Woerter,numWords))
+	      {
+	      case 0:
+		*x = ReadFloatNumber(fp);
+		i++;
+		strcpy(Wort,"\0");
+		break;
+	      case 1:
+		*y = ReadFloatNumber(fp);
+		i++;
+		strcpy(Wort,"\0");
+		break;
+	      default:
+		strcpy(Wort,"\0");
+		break;
+	      }
+
+	zeichen=-1;
+      }
+    }
+
+    if(leseWort){
+      if(zeichen==-1) zeichen+=1;
+      else {
+
+	strcat(Wort,bla);
+
+
+      }
+    } else {
+      strcpy(Wort,"\0");
+    }
+
+
+  }
+
+  while(strcmp(bla,RightParanthesis))
+    {
+      blac = fgetc(fp);
+      sprintf(bla,"%c",blac);
+    }
+
+  blac = fgetc(fp);
+  sprintf(bla,"%c",blac);
+
+  if(!strcmp(bla,Comma))
+    return 1;
+  else
+    return 0;
+
+
+  return list;
+}
+
+
+void ReadString(FILE *fp, char *name)
+{
+  int  ll, k, l, list=0, leseWort=0, i, ii, zeichen=-1, numWords=7;
+  int plist, num;
+  char bla[]=" ", blac, Zeichen[100], msg[100];
+
+  sprintf(name,"%c",'\0');
+
+  while(!leseWort)
+    {
+
+      blac = fgetc(fp);
+      sprintf(bla,"%c",blac);
+      if(!strcmp(bla,DoubleQuote))
+	leseWort=1;
+
+    }
+
+  while(leseWort)
+    {
+
+
+    blac = fgetc(fp);
+    sprintf(bla,"%c",blac);
+
+    if(!strcmp(bla,DoubleQuote))
+      leseWort = 0;
+    else
+      strcat(name,bla);
+
+    }
+}
+
+REAL ReadFloatNumber(FILE *fp)
+{
+  char bla[2], blac, Zeichen[100];
+
+  strcpy(Zeichen,"\0");
+  blac = fgetc(fp); // :
+  blac = fgetc(fp); //
+  sprintf(bla,"%c",blac);
+
+  while(strcmp(bla,Comma)){
+    blac = fgetc(fp); // Start einer Zahl
+    sprintf(bla,"%c",blac);
+    if(!strcmp(bla,Comma) || !strcmp(bla,Space) || !strcmp(bla,NewLine))
+      break;
+    strcat(Zeichen,bla);
+  }
+
+  return atof(Zeichen);
+}
+
+
+int ReadIntNumber(FILE *fp)
+{
+  char bla[2], blac, Zeichen[100];
+  char Comma[]=",", Leerzeichen[]=" ";
+
+  strcpy(Zeichen,"\0");
+  blac = fgetc(fp); // :
+  blac = fgetc(fp); //
+  sprintf(bla,"%c",blac);
+
+  while(strcmp(bla,Comma)){
+    blac = fgetc(fp); // Start einer Zahl
+    sprintf(bla,"%c",blac);
+    if(!strcmp(bla,Comma) || !strcmp(bla,Leerzeichen))
+      break;
+    strcat(Zeichen,bla);
+  }
+
+  return atoi(Zeichen);
+}
+
+
+int Wortabfrage(char *Wort, char Woerter[][100], int N)
+{
+  int i;
+
+  for(i=0 ; i<N ; i++)
+    if(!strcmp(Wort,Woerter[i]))
+      return i;
+
+  return -1;
+
+}
+
+
+
+void WriteEflowFile(char *fname)
+{
+  int l, ll;
+  FILE *fpo;
+
+  fpo = fopen(fname,"w");
+
+  fprintf(fpo,"## PED Model Param\n");
+  fprintf(fpo,"%.2f		# CL (char. Laenge in m)\n",PED.CL);
+  fprintf(fpo,"%.2f		# CP (max. Dichte in Personen/m^2)\n",PED.CP);
+
+  fprintf(fpo,"%d ",SDCV.NumSubdom);
+  for(l=0 ; l<SDCV.NumSubdom ; l++)
+    fprintf(fpo,"%.2f ",PED.CVsd[l]);
+  fprintf(fpo,"		# CV (max. Geschw. in m/sec1)\n");
+
+  fprintf(fpo,"%d		# Gesamtzahl der Personen zu Beginn\n",PED.Pinit);
+  fprintf(fpo,"%.2f		# maximale Laufzeit in Sekunden (bei TimeLoop<0)\n",PED.MaxTime);
+  fprintf(fpo,"## Fundamentaldiagramm\n");
+  fprintf(fpo,"%d		# FD (0: 1-r, 1: afac, 2: 1-exp(...), 3: Goatin, 4: weidmann\n",PED.FD);
+  fprintf(fpo,"## SIR Model Param\n");
+  fprintf(fpo,"%.2f		# REAL PI;      // init: percent infected \n",siragent.PI);
+  fprintf(fpo,"%.2f		# REAL CD;      // critical distance\n",siragent.CD);
+  fprintf(fpo,"%.2f		# REAL IR;      // infection rate\n",siragent.IR);
+  siragent.RT = 1.;
+  fprintf(fpo,"%.2f		# REAL RT;      // resistence time (not yet included)\n",siragent.RT);
+  fprintf(fpo,"%.2f		# REAL PR;      // percent of removed \n",siragent.PR);
+  fprintf(fpo,"%d 	        # int MoveMode  // 0,1,2  (not yet included)\n",video.MoveMode);
+  fprintf(fpo,"## Entrance\n");
+  fprintf(fpo,"empty\n");
+  fprintf(fpo,"## Exits\n");
+  fprintf(fpo,"%d\n",PED.numexit);
+  for(l=0 ; l<PED.numexit ; l++){
+    for(ll=0 ; ll<4 ; ll++){
+      fprintf(fpo,"%.2f ",PED.exit[ll][l]);
+    }
+    fprintf(fpo,"%.2f \n",PED.ExitAttraction[l]);
+  }
+  fprintf(fpo,"## Measurementstations\n");
+  fprintf(fpo,"empty\n");
+  fprintf(fpo,"## Attraktoren / Repelloren\n");
+  fprintf(fpo,"empty\n");
+  fprintf(fpo,"## Subdomain (FD, Rho)\n");
+  fprintf(fpo,"empty\n");
+  fprintf(fpo,"empty\n");
+  fprintf(fpo,"## Domainpolygon\n");
+  fprintf(fpo,"%d\n",DomainPoly.NumK);
+
+  for(l=0 ; l<DomainPoly.NumK ; l++)
+    fprintf(fpo,"%.2f %.2f ",DomainPoly.XY[2*l],DomainPoly.XY[2*l+1]);
+  fprintf(fpo,"\n");
+
+  fprintf(fpo,"%d\n",DomainPoly.NumS);
+  for(l=0 ; l<DomainPoly.NumS ; l++)
+    fprintf(fpo,"%d %d ",DomainPoly.SEG[2*l],DomainPoly.SEG[2*l+1]);
+  fprintf(fpo,"\n");
+
+  fprintf(fpo,"%d\n",DomainPoly.NumH);
+  for(l=0 ; l<DomainPoly.NumH ; l++)
+    fprintf(fpo,"%.2f %.2f ",DomainPoly.HOLES[2*l],DomainPoly.HOLES[2*l+1]);
+  fprintf(fpo,"\n");
+
+  fprintf(fpo,"%.2e %d %d\n",DomainPoly.Granu,refine.lg,refine.ll);
+  fprintf(fpo,"## Grid\n");
+  fprintf(fpo,"empty\n");
+  fclose(fpo);
+
+
+}

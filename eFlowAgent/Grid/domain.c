@@ -1,0 +1,268 @@
+/*!
+  \file domain.c
+  \brief domain constructions
+*/
+#include <ped.h>
+
+extern POLY DomainPoly, *Dpoly;
+extern DAT PED;
+extern SUBDOM RhoIni;
+
+void Exchange(REAL *x, REAL *y)
+{
+  REAL dummy;
+  dummy = *x;
+  *x = *y;
+  *y = dummy;
+}
+
+/*!
+  \brief Calculates the mean value of all coordinates 
+
+  and checks whether the result lies within the polygon area.
+*/
+int MeanPoly(REAL *x, REAL *y, POLY P)
+{
+  int i, N, PiP;
+  REAL xx=0, yy=0;
+
+  N = P.NumK;
+  
+  for(i=0 ; i<N ; i++)
+    {
+      xx += P.XY[2*i];
+      yy += P.XY[2*i+1];
+    }
+
+  *x = xx/N; *y = yy/N;
+  PiP = PointInPoly(*x,*y,P);
+  return PiP;
+}
+
+// nach der Skalierung!
+void PolyHoles()
+{
+  int i, l, PiP;
+  REAL b[2], a[2], nba, MSeg[2], mx, my;
+  
+  for(i=1 ; i<=DomainPoly.NumH ; i++)
+    {
+      //      PiP = MeanPoly(&mx,&my,Dpoly[i]);
+      
+      nba = 0.;
+      for(l=0 ; l<2 ; l++)
+	{
+	  a[l] = DomainPoly.XY[2*Dpoly[i].SEG[0]+l];
+	  b[l] = DomainPoly.XY[2*Dpoly[i].SEG[1]+l];
+	  nba += (b[l]-a[l])*(b[l]-a[l]);
+	  MSeg[l] = 0.5*(a[l]+b[l]);
+	}
+      nba = 1.e-03/sqrt(nba);
+
+      // Dpoly[i].CCW=1: Dann links, speichern in DomainPoly.Holes[0/1]
+      if(Dpoly[i].CCW)
+	{
+	  DomainPoly.HOLES[2*(i-1)]   = MSeg[0]+(a[1]-b[1])*nba;
+	  DomainPoly.HOLES[2*(i-1)+1] = MSeg[1]+(b[0]-a[0])*nba;
+	}
+      // Dpoly[i].CCW=2: Dann rechts
+      else
+	{
+	  DomainPoly.HOLES[2*(i-1)]   = MSeg[0]+(b[1]-a[1])*nba;
+	  DomainPoly.HOLES[2*(i-1)+1] = MSeg[1]+(a[0]-b[0])*nba;
+	}
+    }
+}
+
+
+
+int SegToDomainBoundMagnet(REAL *s1x, REAL *s1y, REAL *s2x, REAL *s2y)
+{
+  int i, j, j1, j2, jmin=0, k, out=0;
+  REAL ax, ay, bx, by, DDl, DDr, DDmin, xp, yp;
+  REAL Drx, Dry, Dlx, Dly;
+  REAL drs1, dls1;
+
+  Drx = *s1x; Dry = *s1y; Dlx = *s2x; Dly = *s2y; 
+  
+  DDmin = 1000;
+  for(j=0 ; j<DomainPoly.NumK ; j++)
+    {
+      j1 = DomainPoly.SEG[2*j];
+      j2 = DomainPoly.SEG[2*j+1];
+      
+      ax = DomainPoly.XY[2*j1];
+      ay = DomainPoly.XY[2*j1+1];
+      bx = DomainPoly.XY[2*j2];
+      by = DomainPoly.XY[2*j2+1];
+      DDl = DistSeg(Drx,Dry,ax,ay,bx,by);
+      DDr = DistSeg(Dlx,Dly,ax,ay,bx,by);
+
+      if(!j) DDmin=sqrt(DDl*DDl+DDr*DDr);
+      if(DDmin>sqrt(DDl*DDl+DDr*DDr))
+	{
+	  DDmin = sqrt(DDl*DDl+DDr*DDr);
+	  jmin  = j1;
+	}
+    }
+  
+  //printf("DDmin=%e, EpsZero=%e\n",DDmin,EpsZero);
+  // das naechstgelegene Segment
+  j1 = DomainPoly.SEG[2*jmin];
+  j2 = DomainPoly.SEG[2*jmin+1];
+	  
+  ax = DomainPoly.XY[2*j1];
+  ay = DomainPoly.XY[2*j1+1];
+  bx = DomainPoly.XY[2*j2];
+  by = DomainPoly.XY[2*j2+1];
+	  
+  OrthogonalProjection(s1x,s1y,Drx,Dry,ax,ay,bx,by);
+  OrthogonalProjection(s2x,s2y,Dlx,Dly,ax,ay,bx,by);
+
+  drs1 = (ax-Drx)*(ax-Drx)+(ay-Dry)*(ay-Dry);
+  dls1 = (ax-Dlx)*(ax-Dlx)+(ay-Dly)*(ay-Dly);
+
+  
+  if(!DomainPoly.PolyNo[j1])  // Domainboundary, Poly_0
+    { //
+      //      if(DomainPoly.CCW[DomainPoly.PolyNo[j1]]) // Poly_0 CCW
+      if(Dpoly[DomainPoly.PolyNo[j1]].CCW) // Poly_0 CCW
+	{
+	  if(drs1>dls1)    // door CW
+	    { // switch
+	      Exchange(s1x,s2x);
+	      Exchange(s1y,s2y);
+	      out=1;
+	    }
+	}
+      else   // Poly_0 CW
+	{
+	  if(drs1<dls1)    // door CW
+	    { // switch
+	      Exchange(s1x,s2x);
+	      Exchange(s1y,s2y);
+	      out=1;
+	    }
+	}
+    }
+  else                        // Holeboundary
+    { 
+      //      if(DomainPoly.CCW[DomainPoly.PolyNo[j1]]) // Poly_0 CCW
+      if(Dpoly[DomainPoly.PolyNo[j1]].CCW) // Poly_0 CCW
+	{
+	  if(drs1<dls1)    // door CW
+	    { // switch
+	      Exchange(s1x,s2x);
+	      Exchange(s1y,s2y);
+	      out=1;
+	    }
+	}
+      else
+	{
+	  if(drs1>dls1)    // door CW
+	    { // switch
+	      Exchange(s1x,s2x);
+	      Exchange(s1y,s2y);
+	      out=1;
+	    }
+	}
+    }
+  return out;
+}
+
+/*!
+// \brief Zerlegung von DomainPoly in einzeln geschlossene Polygone 
+
+zur Vereinfachung weiterer Operationen. Berechnung der jeweiligen Flaecheninhalte (mit Vorzeichen zur Bestimmung der Orientierung (>0: CCW=1, <0: CCW=0)
+*/
+void DomainPolygonsAndOrientations()
+{
+  int i, jp, count=0, n=0, step=0, j, dpcount, j1, j2, jj;
+  REAL *P[2], xmin=DomainPoly.XY[0], xmax=xmin;
+  char msg[100];
+
+  for(j=0 ; j<2 ; j++)
+    P[j] = (REAL *)calloc(DomainPoly.NumK , sizeof(REAL ));
+  
+  for(jp=0 ; jp<=DomainPoly.NumH ; jp++)
+    {
+      Dpoly[jp].SEG = (int *)calloc(2*DomainPoly.NumK , sizeof(int ));
+      Dpoly[jp].XY = (REAL *)calloc(2*DomainPoly.NumK , sizeof(REAL ));
+      dpcount=0;
+      while(1)
+	{
+	  j1 = DomainPoly.SEG[count];
+	  j2 = DomainPoly.SEG[count+1];
+	  Dpoly[jp].SEG[dpcount]   = j1;
+	  Dpoly[jp].SEG[dpcount+1] = j2;
+	  Dpoly[jp].XY[dpcount] = DomainPoly.XY[2*j1];
+	  Dpoly[jp].XY[dpcount+1] = DomainPoly.XY[2*j1+1];
+	  jj = (int)(dpcount/2);
+	  P[0][jj] = DomainPoly.XY[2*Dpoly[jp].SEG[dpcount]];
+	  P[1][jj] = DomainPoly.XY[2*Dpoly[jp].SEG[dpcount]+1];
+
+	  if(!jp) // interessiert nur bei aeusserem Polygon
+	    {
+	      if(xmin>P[0][jj]) xmin=P[0][jj];
+	      if(xmax<P[0][jj]) xmax=P[0][jj];
+	    }
+	  
+	  count += 2;
+	  dpcount += 2;
+	  
+	  DomainPoly.PolyNo[j1] = jp;
+	  
+	  if(j2==DomainPoly.SEG[step])
+	    {
+	      step=count;
+	      DomainPoly.PolyNo[j2] = jp;
+	      Dpoly[jp].Area = PolyArea(P,dpcount/2);
+	      Dpoly[jp].Area /= (xmax-xmin)*(xmax-xmin);
+	      Dpoly[jp].CCW = 0;
+	      if(Dpoly[jp].Area>0) Dpoly[jp].CCW = 1;
+	      Dpoly[jp].NumK = count;
+	      break;
+	    }
+	}
+
+    }
+
+  DomainPoly.Area = fabs(Dpoly[0].Area);
+  for(jp=1 ; jp<=DomainPoly.NumH ; jp++)
+    DomainPoly.Area -= fabs(Dpoly[jp].Area);
+
+#if MSG
+  /*
+  sprintf(msg,"DomainPoly");
+  WriteLog(msg,"a");
+  sprintf(msg,"scaled area: %.4f",DomainPoly.Area);
+  WriteLog(msg,"a");
+  sprintf(msg,"real area: %.2f",DomainPoly.Area*PED.CL*PED.CL);
+  WriteLog(msg,"a");
+  sprintf(msg,"allowed Pinit: %d",(int)(DomainPoly.Area*PED.CL*PED.CL*PED.CP));
+  WriteLog(msg,"a");
+  WriteLog("Poly Orientations","a");
+  for(jp=0 ; jp<=DomainPoly.NumH ; jp++)
+    {
+      sprintf(msg,"Poly_%d.CCW = %d",jp,Dpoly[jp].CCW);
+      WriteLog(msg,"a");
+    }
+  */
+#endif
+
+  if(!RhoIni.NumSubdom)
+    {
+      if(PED.Pinit>(int)(DomainPoly.Area*PED.CL*PED.CL*PED.CP))
+	{
+	  PED.Pinit=(int)(DomainPoly.Area*PED.CL*PED.CL*PED.CP*0.9);
+#if MSG
+	  sprintf(msg,"Too many people at beginning. allowed=%d/used=%d",(int)(DomainPoly.Area*PED.CL*PED.CL*PED.CP),PED.Pinit);
+	  Message(msg,'.',"DomainPolygonsAndOrientations");
+#endif
+	}
+    }
+  
+  for(j=0 ; j<2 ; j++)
+    free(P[j]);
+
+}
