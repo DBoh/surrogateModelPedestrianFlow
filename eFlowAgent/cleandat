@@ -1,4 +1,0 @@
-find ./Octave -name "*.dat" -type f -delete
-find ./Octave -name "*.m" -type f -delete
-find ./Octave -name "*.am_fmt" -type f -delete
-rm  VideoCreator/eFlowAgent.avi
