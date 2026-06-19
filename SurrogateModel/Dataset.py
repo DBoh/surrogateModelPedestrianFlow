@@ -126,8 +126,11 @@ class Dataset:
 
         take_exp = [-1, -1, -1]  # -1 = alle Samples laden
         
-        shuffle = [False, True, False] # nur Trainingsdaten werden geshuffelt, damit er nicht die zeitliche Reihenfolge der Samples lernt
+        shuffle = [False, True, False] # only training data shuffled (TRUE) so that model does not learn whole time series
 
+        # ----------
+        # (1) read tfread files
+        # ----------
         for idx in range(len(self.files)):
 
             num_parallel_calls = tf.data.experimental.AUTOTUNE
@@ -138,7 +141,7 @@ class Dataset:
                 else:
                     files = self.files[idx]
             else:
-                # fallback: verzeichnispfad
+                # fallback if files are not found
                 import glob
                 files = glob.glob(self.files[idx] + '*.tfrecord')
                 if shuffle[idx]:
@@ -154,6 +157,7 @@ class Dataset:
             dataset_size = len(files) * 5  # 5 samples pro tfrecord
 
             dataset = dataset.map(parse_tfrecord_fn, num_parallel_calls=num_parallel_calls)
+
             datasets = []
             if idx == 0: # test
                 start_times = 1
@@ -211,7 +215,7 @@ class Dataset:
 
         return self
 
-    ### VISUALIZE RESULTS: wird bei model.predict() am Ende aufgerufen
+    ### VISUALIZE RESULTS: called in model.predict() at the end (in ..._config.py)
 
     def print_label_predict_rho_v(self, save_path=None):
         fontsize = 5
@@ -302,7 +306,12 @@ def parse_tfrecord_fn(example):
     geometry = tf.io.parse_tensor(example['geometry'], out_type=tf.int32)
     label = tf.io.parse_tensor(example['label'], out_type=tf.float64)
     analysis_params = tf.py_function(lambda x: x.numpy().decode('utf-8'), [example['analysis_params']], tf.string)
-    param = tf.stack([float(char_density), char_velocity, float(start_persons)])
+
+    param = tf.stack([
+        tf.cast(char_density, tf.float32),
+        tf.cast(char_velocity, tf.float32),
+        tf.cast(start_persons, tf.float32),
+    ])
 
     selected_features = {
         'parameter': param,
@@ -329,11 +338,16 @@ def preprocess(features, label, analyse, feature_time_steps, label_time_steps, s
     
     if label_time_steps > TimeConfig.TFRECORD_MAX_STEPS:
         raise ValueError(f"Der Startpunkt liegt zu weit hinten. {label_time_steps} > {TimeConfig.TFRECORD_MAX_STEPS}.")
-# hier werden die entsprechenden Zeitfenster der Zeitreihen eingelesen: Für Inputdaten
+
+    # ----------
+    # Read windows of time series: input data
+    # ----------
     feature_rho, feature_v = change_size_startfield(label, feature_time_steps=feature_time_steps,
                                                     start_time=start_time,
                                                     time_stride=time_stride)
-    # hier werden die entsprechenden Zeitfenster der Zeitreihen eingelesen: Für Outputdaten
+    # ----------
+    # Read windows of time series: label
+    # ----------
     label_rho, label_v, label_phi = change_size_label(label, label_time_steps, feature_time_steps,
                                            start_time,
                                            time_stride=time_stride)
@@ -381,7 +395,7 @@ def preprocess(features, label, analyse, feature_time_steps, label_time_steps, s
     }
     return feature, label_rho, label_v, analyse
 
-# Funktionen zum Einlesen der richtigen Zeitfenster aus den Zeitreihen: für Input und Output
+# reads windows from time series for input
 def change_size_startfield(data, feature_time_steps, start_time=0, time_stride=1,
                             size_geometry=(64, 64)):
     if feature_time_steps == 0:
@@ -398,7 +412,7 @@ def change_size_startfield(data, feature_time_steps, start_time=0, time_stride=1
          ], axis=1)
     return data[::, :1], data[::, 1:3]
 
-# label = Outputdaten
+# reads windows from time series for label = output
 def change_size_label(data, label_time_steps, feature_time_steps, start_time=0, time_stride=1,
                       size_geometry=(64, 64)):
     data = tf.stack([data[start_time + feature_time_steps:(start_time + feature_time_steps+ label_time_steps):time_stride, 0, 0:size_geometry[0], 0:size_geometry[1]],

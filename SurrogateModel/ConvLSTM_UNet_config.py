@@ -3,21 +3,23 @@ import os
 
 import numpy as np
 import tensorflow as tf
+from tensorflow import keras
 
 from keras.src.utils import plot_model
 from matplotlib import pyplot as plt
 
 from ConvLSTM_UNet_model import ConvLSTM_UNet_model
 
-## Klasse legt Konfiguration des Modells fest
+# -----------------------------
+# ConvLSTM-UNet MODEL DEFINITION
+# -----------------------------
+
 
 class ConvLSTM_UNet_config:
     def __init__(self, dataset, dataset_train, dataset_val, dataset_test, name, batch_size, epoch, time_stride,
                  save_path, load_path, directory, initial_step_pred, pred_steps, geo_size=(64, 64),
                  learning_rate=0.003, beta_1=0.9, beta_2=0.999,   batch_norm=None,
-                 feats=8, kernel_size=(3, 3), pool_size=(1, 2, 2), padding='same', activation_out='tanh', return_sequence=True,
-                 block_numb= 4, input=['rho','v'], output=['rho','v'],
-                 loss_weights=[1, 1]):
+                 feats=8, padding='same', loss_weights=[1, 1]):
 
         self.name = name
         self.loss = 'mse'
@@ -29,11 +31,7 @@ class ConvLSTM_UNet_config:
                                                   beta_1=self.beta_1, beta_2=self.beta_2, clipnorm=1.0)
         self.batch_norm = batch_norm
         self.feats = feats
-        self.kernel_size = kernel_size
-        self.pool_size = pool_size
         self.padding = padding
-        self.activation_out = activation_out
-        self.return_sequence = return_sequence
 
         self.metrics = ['mse' ,'mse']
         self.run_eagerly = False
@@ -55,17 +53,19 @@ class ConvLSTM_UNet_config:
         self.pred_time = 0
 
         self.geo_size = geo_size
-        self.block_numb = block_numb
         self.input = input
-        self.output = output
         self.input_dict={}
         self.model = self.model_unet()
 
     def model_unet(self):
 
-      model = ConvLSTM_UNet_model(self.name, self.geo_size, self.pred_steps, self.feats, self.kernel_size, self.pool_size,
-                               self.batch_norm, self.padding, self.return_sequence)
+      model = ConvLSTM_UNet_model(self.geo_size, self.pred_steps, self.feats,
+                               self.batch_norm, self.padding, self.name)
       return model
+
+    # -------------------
+    # CUSTOM LOSS FUNCTIONS
+    # ---------------------
 
     @tf.function
     def my_loss_v(self, y_true, y_pred):
@@ -76,37 +76,33 @@ class ConvLSTM_UNet_config:
         n_true = tf.norm(y_true, axis=-1)
         n_pred = tf.norm(y_pred, axis=-1)
 
-        # Masken
-        #mask_mag = tf.cast(n_true > 0.01, tf.float32)
-        #mask_ang = tf.cast(n_true > 0.05, tf.float32)
-
-        # --- Betragsteil ---
+        # --- relative error in speed = length velocity vector ---
         dev_veloc = tf.abs(n_pred - n_true) / (n_true + eps)
         #dev_veloc = dev_veloc * mask_mag
 
-        # --- Winkelteil ---
+        # --- direction of velocity vector  ---
         dot = tf.reduce_sum(y_true * y_pred, axis=-1)
         cos = dot / (n_true * n_pred + eps)
         cos = tf.clip_by_value(cos, -1.0, 1.0)
         dev_angle = tf.acos(cos) / np.pi
-        #dev_angle = dev_angle * mask_ang
-        # --- Kombination ---
+
+        # --- combination ---
         loss = 1e-5 * dev_veloc + 0.4 * dev_angle
         return tf.reduce_mean(loss)
 
-    @tf.function # Struktur: Bildähnlichkeit und MAE
+    @tf.function # structure loss function: image similarity and MAE
     def my_loss_rho(self, y_true,y_pred):
         # Mixed-precision fix
         y_true = tf.cast(y_true, tf.float32)
         y_pred = tf.cast(y_pred, tf.float32)
-        # SSIM liefert Ähnlichkeit pro Bild → wir wollen daraus einen Loss machen
+        # SSIM = similarity of images
         ssim = tf.image.ssim(y_true, y_pred, max_val=1.0)
         ssim_loss = 1 - tf.reduce_mean(ssim)
 
-        # MAE pro Pixel → mitteln
+        # MAE
         mae = tf.reduce_mean(tf.abs(y_true - y_pred))
 
-        # Kombination
+        # combination
         return mae + 0.5 * ssim_loss
 
     @tf.function
@@ -148,93 +144,161 @@ class ConvLSTM_UNet_config:
 
         return 0.3*mse_v + 0.05*mse_grad
 
+    #------------------------------
+    # BUILD MODEL
+    # -----------------------------
+
     def build_model_(self, load=False):
-        if not load:
-            # Wenn load=False, trainieren wir ein neues Modell
 
-            self.model.compile(optimizer=self.optimizer,  loss={'out_rho': self.h1_norm_rho, 'out_v': self.h1_norm_v},
-                               loss_weights=self.loss_weights,
-                                jit_compile=False, metrics={"out_rho": self.h1_norm_rho, "out_v": self.h1_norm_v},
-                               run_eagerly=False)
+        from ConvLSTM_UNet_model import ConvLSTM_UNet_model
 
+        # ---------------------------------------------------------
+        # 1) Modell neu erstellen ODER laden
+        # ---------------------------------------------------------
+        if load:
+            print(f"→ Load model from {self.load_path}")
 
-            early_stopping = tf.keras.callbacks.EarlyStopping(
-                monitor='val_loss',
-                patience=8,
-                min_delta=1e-4,
-                restore_best_weights=True
+            from keras import mixed_precision
+
+            mixed_precision.set_global_policy("float32")
+            self.model = tf.keras.models.load_model(
+                self.load_path,
+                custom_objects={"ConvLSTM_UNet_model": ConvLSTM_UNet_model},
+                compile=False
             )
-            reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(monitor="val_loss", factor = 0.1, patience=2)
+
+            # compile
+            self.model.compile(
+                optimizer=self.optimizer,
+                loss=[self.h1_norm_rho, self.h1_norm_v],
+                loss_weights=self.loss_weights,
+                metrics=[self.h1_norm_rho, self.h1_norm_v],
+                jit_compile=False,
+                run_eagerly=False
+            )
 
             self.model.summary(expand_nested=True)
 
-            start_timer = time.perf_counter()
-
-            # output verzeichnis
-            save_dir = os.path.dirname(self.save_path)
-            raw_dir = os.path.join(save_dir, "output")
-            if not os.path.exists(raw_dir):
-                os.makedirs(raw_dir)
-
-            # Anpasse save_path für output
-            raw_save_path = os.path.join(raw_dir, os.path.basename(self.save_path))
-
-
-            self.history = self.model.fit(self.dataset_train, epochs=self.epoch,
-                                          batch_size = self.batch_size,
-                                          validation_data=self.dataset_val,
-                                          callbacks=early_stopping
-                                          )
-
-            self.train_time = time.perf_counter() - start_timer
-            print('Dauer Training:', self.train_time)
-
-            #self.saved_model = tf.keras.models.save_model(self.model, raw_save_path + '.keras')
-            self.saved_model = self.model.save(raw_save_path + '.keras')
-            plot_model(self.model, to_file=raw_save_path + '_model.png',
-                       show_shapes=True, expand_nested=True, show_layer_activations=True)
-
-            plt.plot(self.history.history['loss'], label='Train')
-            # funktioniert auch ohne val-daten
-            if 'val_loss' in self.history.history:
-                plt.plot(self.history.history['val_loss'], label='Eval')
-            else:
-                print("keine val daten")
-            plt.ylim(0, max(plt.ylim()))
-            plt.legend()
-            plt.title('Loss')
-            plt.savefig(raw_save_path + '_loss.png')
-            plt.close()  
-
         else:
-            # Wenn load=True, laden wir ein bestehendes Modell
-            print('lade modell')
-            if os.path.exists(self.load_path):
-                self.model = tf.keras.models.load_model(self.load_path, compile=False)
-                self.model.save("neu.keras")
-            else:
-                print(f"modell nicht gefunden: {self.load_path}")
-                print("neues modell")
+            # ---------------------------------------------------------
+            # 2) new model
+            # ---------------------------------------------------------
+            print("→ Initialize new ConvLSTM‑UNet model…")
 
+            self.model = ConvLSTM_UNet_model(
+                name=self.name,
+                geo_size=self.geo_size,
+                pred_steps=self.pred_steps,
+                feats=self.feats,
+                batch_norm=self.batch_norm,
+                padding=self.padding
+            )
+
+            # ---------------------------------------------------------
+            # 3) call model
+            # ---------------------------------------------------------
+            print("→ build model with dummy values…")
+
+            dummy_rho = tf.zeros((1, self.pred_steps, 64, 64, 1))
+            dummy_v = tf.zeros((1, self.pred_steps, 64, 64, 2))
+            dummy_geo = tf.zeros((1, self.pred_steps, 64, 64, 2))
+
+            _ = self.model([dummy_rho, dummy_v, dummy_geo])
+
+            # ---------------------------------------------------------
+            # 4) compile model
+            # ---------------------------------------------------------
+            print("→ Compile model…")
+
+            self.model.compile(
+                optimizer=self.optimizer,
+                loss=[self.h1_norm_rho, self.h1_norm_v],
+                loss_weights=self.loss_weights,
+                metrics=[self.h1_norm_rho, self.h1_norm_v],
+                jit_compile=False,
+                run_eagerly=False
+            )
+
+            self.model.summary(expand_nested=True)
+
+        # ---------------------------------------------------------
+        # 5) Training starten
+        # ---------------------------------------------------------
+        print("→ Start Training…")
+
+        early_stopping = tf.keras.callbacks.EarlyStopping(
+            monitor='val_loss',
+            patience=8,
+            min_delta=1e-4,
+            restore_best_weights=True
+        )
+
+        reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(
+            monitor="val_loss",
+            factor=0.1,
+            patience=2
+        )
+
+        start_timer = time.perf_counter()
+
+        self.history = self.model.fit(
+            self.dataset_train,
+            epochs=self.epoch,
+            batch_size=self.batch_size,
+            validation_data=self.dataset_val,
+            callbacks=[early_stopping, reduce_lr]
+        )
+
+        self.train_time = time.perf_counter() - start_timer
+        print('→ Duration Training:', self.train_time)
+
+        # ---------------------------------------------------------
+        # 6) Ergebnisse speichern
+        # ---------------------------------------------------------
+        save_dir = os.path.dirname(self.save_path)
+        raw_dir = os.path.join(save_dir, "output")
+        os.makedirs(raw_dir, exist_ok=True)
+
+        raw_save_path = os.path.join(raw_dir, os.path.basename(self.save_path))
+
+        plot_model(
+            self.model,
+            to_file=raw_save_path + '_model.png',
+            show_shapes=True,
+            expand_nested=True,
+            show_layer_activations=True
+        )
+
+        plt.plot(self.history.history['loss'], label='Train')
+        if 'val_loss' in self.history.history:
+            plt.plot(self.history.history['val_loss'], label='Eval')
+        plt.legend()
+        plt.title('Loss')
+        plt.savefig(raw_save_path + '_loss.png')
+        plt.close()
+
+    #--------------------------
+    # PREDICTION : Autoregression
+    # ------------------------
     def predict(self):
         # falls keine test-daten
         if self.dataset_test is None:
-            print("keine test daten")
+            print("no test data")
             return
         
         try:
             dataset = next(iter(self.dataset_test))
         except (StopIteration, TypeError):
-            print("test dataset leer")
+            print("test dataset empty")
             return
             
         geo = dataset[0]['geometry']
         features = dataset[0]
-        # labels haben Form (batch, H, W, C)
+        # labels (batch, H, W, C)
         rho_label = features['rho']  # (batch, 1, H, W, 1)
         v_label = features['v']  # (batch, 1, H, W, 2)
 
-        # in Plot-Format bringen
+        #
         rho_label = tf.transpose(rho_label, [0, 1, 4, 2, 3])  # (B,1,C,H,W)
         v_label = tf.transpose(v_label, [0, 1, 4, 2, 3])
 
@@ -242,22 +306,22 @@ class ConvLSTM_UNet_config:
         rho = dataset[0]['rho']
         v = dataset[0]['v']
 
-        result_steps = self.pred_steps - self.dataset.feature_time_steps# Schritte für Vorhersage - Inputzeitschritte
+        result_steps = self.pred_steps - self.dataset.feature_time_steps# steps for prediction minus training steps
 
         data = {
               'rho': rho[:,:self.dataset.feature_time_steps,:,:],
                'v': v[:,:self.dataset.feature_time_steps,:,:],
               'geometry': geo[:,:self.dataset.feature_time_steps,:,:]
-               }  # wird für die iterative Vorhersage genutzt, übernimmt immer nur die letzten 5 Zeitschritte
-        data_temp = data # speichert alle Zeitschritte
+               }  # used for autoregression, contains only last 5 time steps
+        data_temp = data # saves all time steps
         start_timer = time.perf_counter()
 
         for step in range(result_steps - self.initial_step_pred):
               predictions = self.model.predict(data,batch_size=self.batch_size)
 
-              new_rho = predictions[0][::, tf.newaxis, ::, ::, ::] # zusätzliche Zeitdim. für Outputdaten erzeugen
+              new_rho = predictions[0][::, tf.newaxis, ::, ::, ::] # generate additional time dimension
               rho_temp = tf.concat((data_temp['rho'], new_rho), axis=1)
-              new_rho = tf.concat((data['rho'], new_rho), axis=1) # an Inputdaten anhängen
+              new_rho = tf.concat((data['rho'], new_rho), axis=1) # concatenate to input data
 
               new_v = predictions[1][::, tf.newaxis, ::, ::, ::]
               v_temp = tf.concat((data_temp['v'], new_v), axis=1)
@@ -265,7 +329,7 @@ class ConvLSTM_UNet_config:
 
 
               data = {
-                  'rho': new_rho[:,-self.dataset.feature_time_steps:,:,:], # letzten feature-time_steps-Zeitschritte verwenden
+                  'rho': new_rho[:,-self.dataset.feature_time_steps:,:,:], #
                   'v': new_v[:,-self.dataset.feature_time_steps:,:,:],
                   'geometry': geo[:,-self.dataset.feature_time_steps:,:,:]
               }
@@ -276,7 +340,7 @@ class ConvLSTM_UNet_config:
 
 
         self.pred_time = time.perf_counter()- start_timer
-        print('Dauer Vorhersage:', self.pred_time)
+        print('Duration Prediction:', self.pred_time)
 
         predictions = (np.transpose(data_temp['rho'], [0, 1, 4, 2, 3]),
                          np.transpose(data_temp['v'], [0, 1, 4, 2, 3]))
